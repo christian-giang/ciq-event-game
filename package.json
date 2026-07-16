@@ -12,7 +12,8 @@
     "db:migrate": "drizzle-kit migrate",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "export": "tsx --env-file=.env.local scripts/export.ts",
-    "teardown": "tsx --env-file=.env.local scripts/teardown.ts"
+    "teardown": "tsx --env-file=.env.local scripts/teardown.ts",
+    "demo": "tsx --env-file=.env.local scripts/demo.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.6.1",

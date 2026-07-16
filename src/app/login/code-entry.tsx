@@ -30,7 +30,7 @@ export function CodeEntry() {
         return;
       }
       localStorage.setItem("wg_code", code);
-      localStorage.setItem("wg_username", data.username);
+      // /quests sends them to /me first if they haven't set a name yet.
       router.push("/quests");
     } catch {
       setError("Network hiccup — try again.");

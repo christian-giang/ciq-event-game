@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Avatar } from "@/components/avatar";
 
 type Data = {
   frozen: boolean;
-  top: { playerId: string; username: string; points: number; rank: number }[];
+  top: {
+    playerId: string;
+    username: string;
+    avatarUrl: string | null;
+    points: number;
+    rank: number;
+  }[];
   photos: { url: string; username: string }[];
 };
 
@@ -69,7 +76,7 @@ export function BigScreen() {
                   key={entry.playerId}
                   className="flex items-center gap-4 text-2xl lg:text-3xl"
                 >
-                  <span className="w-12 shrink-0 text-center font-heading">
+                  <span className="w-10 shrink-0 text-center font-heading">
                     {entry.rank === 1
                       ? "🥇"
                       : entry.rank === 2
@@ -78,6 +85,11 @@ export function BigScreen() {
                           ? "🥉"
                           : entry.rank}
                   </span>
+                  <Avatar
+                    name={entry.username}
+                    avatarUrl={entry.avatarUrl}
+                    size={44}
+                  />
                   <span className="min-w-0 flex-1 truncate">
                     {entry.username}
                   </span>

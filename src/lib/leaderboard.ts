@@ -7,6 +7,7 @@ import type { Quest } from "@/content/quests";
 export type LeaderboardEntry = {
   playerId: string;
   username: string;
+  avatarUrl: string | null;
   points: number;
   /** Competition ranking: ties share a rank, the next rank is skipped. */
   rank: number;
@@ -56,9 +57,10 @@ export async function getLeaderboards(): Promise<Leaderboards> {
         .from(quizAnswers),
     ]);
 
-  // Blocked players and the admin's demo player never appear.
+  // Blocked players, the admin's demo player, and anyone who hasn't
+  // finished onboarding (no name yet) never appear.
   const eligible = allPlayers.filter(
-    (p) => !p.isBlocked && p.email !== DEMO_EMAIL,
+    (p) => !p.isBlocked && p.email !== DEMO_EMAIL && p.username,
   );
 
   const totalsFor = (selected: Quest[]): Map<string, number> => {
@@ -81,7 +83,8 @@ export async function getLeaderboards(): Promise<Leaderboards> {
     const sorted = eligible
       .map((p) => ({
         playerId: p.id,
-        username: p.username,
+        username: p.username ?? "",
+        avatarUrl: p.avatarUrl,
         points: totals.get(p.id) ?? 0,
       }))
       .sort(

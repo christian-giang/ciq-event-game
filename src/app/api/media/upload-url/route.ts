@@ -5,7 +5,6 @@ import { db } from "@/db";
 import { players } from "@/db/schema";
 import { EXT_BY_CONTENT_TYPE, storageDriver } from "@/lib/media/server";
 import { getPlayerId } from "@/lib/session";
-import { isFrozen } from "@/lib/settings";
 
 const bodySchema = z.object({
   clientUuid: z.uuid(),
@@ -29,12 +28,10 @@ export async function POST(req: Request) {
   if (!player || player.isBlocked) {
     return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   }
-  if (await isFrozen()) {
-    return NextResponse.json(
-      { error: "The game is over — the leaderboard is final!" },
-      { status: 409 },
-    );
-  }
+  // No freeze check here: this only authorizes a byte upload (used by both
+  // submissions and profile avatars). The freeze is enforced where it
+  // matters — the submission/vote/answer metadata endpoints — and avatar
+  // edits stay allowed even after the game is frozen.
 
   let body: z.infer<typeof bodySchema>;
   try {

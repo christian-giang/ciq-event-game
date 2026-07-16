@@ -9,13 +9,11 @@ import { Resend } from "resend";
 export async function sendAccessCodeEmail(opts: {
   to: string;
   code: string;
-  username: string;
 }): Promise<void> {
   const subject = "Your wedding game access code";
   const text = [
     `Welcome to Teodora & Uroš's wedding game!`,
     ``,
-    `Your player name: ${opts.username}`,
     `Your access code: ${opts.code}`,
     ``,
     `Keep this code to yourself — it's how you log in.`,

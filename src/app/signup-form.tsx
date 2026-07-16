@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type SignupResult =
-  | { status: "new"; username: string; code: string }
+  | { status: "new"; code: string }
   | { status: "existing" };
 
 export function SignupForm() {
@@ -36,7 +36,6 @@ export function SignupForm() {
         // Convenience copy so /me can show the code later; the HTTP-only
         // cookie is what actually keeps you signed in.
         localStorage.setItem("wg_code", data.code);
-        localStorage.setItem("wg_username", data.username);
       }
       setResult(data);
     } catch {
@@ -66,9 +65,7 @@ export function SignupForm() {
   if (result?.status === "new") {
     return (
       <div className="space-y-4 text-center">
-        <p className="label-caps">You are</p>
-        <p className="font-heading text-3xl">{result.username}</p>
-        <p className="label-caps mt-4">Your secret access code</p>
+        <p className="label-caps">Your secret access code</p>
         <p className="font-mono text-5xl font-bold tracking-[0.15em]">
           {result.code}
         </p>
@@ -89,9 +86,9 @@ export function SignupForm() {
         <button
           type="button"
           className="btn-primary w-full rounded-lg px-5 py-3 font-semibold"
-          onClick={() => router.push("/quests")}
+          onClick={() => router.push("/me")}
         >
-          Let&apos;s play
+          Set up my profile →
         </button>
       </div>
     );

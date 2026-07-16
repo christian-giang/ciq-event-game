@@ -70,6 +70,41 @@ export async function processPhoto(file: File): Promise<Blob> {
   return blob;
 }
 
+/** Center-crop a picked photo to a square avatar (~400px) JPEG. */
+export async function processAvatar(file: File): Promise<Blob> {
+  if (!file.type.startsWith("image/")) {
+    throw new MediaRejection("That doesn't look like a photo.");
+  }
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    throw new MediaRejection("Couldn't read that image — try another.");
+  }
+
+  const size = 400;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new MediaRejection("Couldn't process that image.");
+
+  // Cover: scale so the shorter edge fills the square, then center.
+  const scale = Math.max(size / bitmap.width, size / bitmap.height);
+  const w = bitmap.width * scale;
+  const h = bitmap.height * scale;
+  ctx.drawImage(bitmap, (size - w) / 2, (size - h) / 2, w, h);
+  bitmap.close();
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("toBlob null"))),
+      "image/jpeg",
+      0.85,
+    );
+  });
+}
+
 /**
  * Validate a picked video without uploading it: duration from metadata,
  * byte size from the file. Throws MediaRejection with a message the guest

@@ -52,13 +52,14 @@ export function FreezeToggle({ frozen }: { frozen: boolean }) {
 
 export function PlayerRow(props: {
   id: string;
-  username: string;
+  username: string | null;
   email: string;
   accessCode: string;
   isBlocked: boolean;
   createdAt: string;
 }) {
   const router = useRouter();
+  const displayName = props.username ?? "(no name yet)";
   const [showCode, setShowCode] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -66,7 +67,9 @@ export function PlayerRow(props: {
     <li className="card flex items-center justify-between gap-3 rounded-2xl p-3">
       <div className="min-w-0">
         <p className="font-medium">
-          {props.username}
+          <span className={props.username ? "" : "text-muted italic"}>
+            {displayName}
+          </span>
           {props.isBlocked && (
             <span className="ml-2 text-sm text-danger">blocked</span>
           )}
@@ -91,7 +94,7 @@ export function PlayerRow(props: {
         onClick={async () => {
           if (
             !props.isBlocked &&
-            !confirm(`Block ${props.username}? They can no longer log in.`)
+            !confirm(`Block ${displayName}? They can no longer log in.`)
           ) {
             return;
           }

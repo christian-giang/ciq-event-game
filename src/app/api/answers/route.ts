@@ -90,11 +90,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Try again." }, { status: 500 });
   }
 
-  return NextResponse.json({
-    ok: true,
-    chosenOptionId: stored.chosenOptionId,
-    ...(quest.revealAfterAnswer
-      ? { isCorrect: stored.isCorrect, correctOptionId: quest.correctOptionId }
-      : {}),
-  });
+  // Never reveal correctness at answer time — the reveal happens only when
+  // the game master completes the quest (see the quest page).
+  return NextResponse.json({ ok: true, chosenOptionId: stored.chosenOptionId });
 }

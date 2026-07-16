@@ -1,16 +1,14 @@
 import Link from "next/link";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { players } from "@/db/schema";
 import {
   getLeaderboards,
   type LeaderboardCategory,
   type LeaderboardEntry,
 } from "@/lib/leaderboard";
-import { getPlayerId } from "@/lib/session";
+import { getCurrentPlayer } from "@/lib/auth";
 import { isFrozen } from "@/lib/settings";
-import { PlayerNav } from "@/components/player-nav";
+import { Avatar } from "@/components/avatar";
+import { PlayerShell } from "@/components/player-shell";
 
 const CATEGORIES: { key: LeaderboardCategory; label: string }[] = [
   { key: "overall", label: "Overall" },
@@ -33,7 +31,7 @@ function Row({
       }`}
     >
       <span
-        className={`w-10 shrink-0 text-center font-heading text-2xl ${
+        className={`w-8 shrink-0 text-center font-heading text-2xl ${
           entry.rank <= 3 ? "" : "text-muted"
         }`}
       >
@@ -45,6 +43,7 @@ function Row({
               ? "🥉"
               : entry.rank}
       </span>
+      <Avatar name={entry.username} avatarUrl={entry.avatarUrl} size={36} />
       <span className="min-w-0 flex-1 truncate font-medium">
         {entry.username}
         {isMe && <span className="ml-2 text-sm text-muted">(you)</span>}
@@ -59,13 +58,10 @@ export default async function LeaderboardPage({
 }: {
   searchParams: Promise<{ c?: string }>;
 }) {
-  const playerId = await getPlayerId();
-  if (!playerId) redirect("/");
-
-  const player = await db.query.players.findFirst({
-    where: eq(players.id, playerId),
-  });
-  if (!player || player.isBlocked) redirect("/");
+  const player = await getCurrentPlayer();
+  if (!player) redirect("/");
+  if (!player.username) redirect("/me");
+  const playerId = player.id;
 
   const { c } = await searchParams;
   const category: LeaderboardCategory = CATEGORIES.some((x) => x.key === c)
@@ -80,7 +76,7 @@ export default async function LeaderboardPage({
   const anyPoints = entries.some((e) => e.points > 0);
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pb-24 pt-8">
+    <PlayerShell username={player.username} avatarUrl={player.avatarUrl}>
       <p className="label-caps mb-1">
         {frozen ? "Final results" : "Live standings"}
       </p>
@@ -137,8 +133,6 @@ export default async function LeaderboardPage({
           </ol>
         </div>
       )}
-
-      <PlayerNav active="leaderboard" />
-    </main>
+    </PlayerShell>
   );
 }

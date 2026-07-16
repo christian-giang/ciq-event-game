@@ -14,7 +14,11 @@ import {
 export const players = pgTable("players", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
-  username: text("username").notNull().unique(),
+  // The guest's chosen display name. NULL until they finish onboarding
+  // (set it on the profile page). Still UNIQUE — two guests can't share a
+  // name — but Postgres allows many NULLs, so pre-onboarding rows coexist.
+  username: text("username").unique(),
+  avatarUrl: text("avatar_url"),
   // Zero-padded string, never an int: "042107" must stay 6 chars.
   accessCode: char("access_code", { length: 6 }).notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true })

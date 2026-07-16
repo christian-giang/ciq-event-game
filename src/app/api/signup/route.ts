@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { codePool, players, usernamePool } from "@/db/schema";
+import { codePool, players } from "@/db/schema";
 import { sendAccessCodeEmail } from "@/lib/email";
 import { setPlayerSession } from "@/lib/session";
 
@@ -11,24 +11,22 @@ const bodySchema = z.object({
   consent: z.literal(true),
 });
 
-/** Pops the next unused row from a pool table; safe under concurrency. */
-async function popFromPool(
+/** Pops the next unused access code from the pool; safe under concurrency. */
+async function popCode(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  table: "code_pool" | "username_pool",
-  column: "code" | "username",
 ): Promise<string> {
   const result = await tx.execute(sql`
-    UPDATE ${sql.identifier(table)} SET used = true
+    UPDATE ${sql.identifier("code_pool")} SET used = true
     WHERE position = (
-      SELECT position FROM ${sql.identifier(table)}
+      SELECT position FROM ${sql.identifier("code_pool")}
       WHERE NOT used ORDER BY position
       LIMIT 1 FOR UPDATE SKIP LOCKED
     )
-    RETURNING ${sql.identifier(column)}
+    RETURNING code
   `);
-  const value = result.rows[0]?.[column];
+  const value = result.rows[0]?.code;
   if (typeof value !== "string") {
-    throw new Error(`${table} exhausted — reseed with a larger pool`);
+    throw new Error("code_pool exhausted — reseed with a larger pool");
   }
   return value;
 }
@@ -55,7 +53,6 @@ export async function POST(req: Request) {
       await sendAccessCodeEmail({
         to: existing.email,
         code: existing.accessCode,
-        username: existing.username,
       });
     } catch (err) {
       console.error("resend-code email failed", err);
@@ -64,14 +61,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    // No display name is assigned — the guest sets it during onboarding.
     const player = await db.transaction(async (tx) => {
-      const [code, username] = [
-        await popFromPool(tx, "code_pool", "code"),
-        await popFromPool(tx, "username_pool", "username"),
-      ];
+      const code = await popCode(tx);
       const [row] = await tx
         .insert(players)
-        .values({ email: body.email, username, accessCode: code })
+        .values({ email: body.email, accessCode: code })
         .returning();
       return row;
     });
@@ -82,12 +77,10 @@ export async function POST(req: Request) {
     sendAccessCodeEmail({
       to: player.email,
       code: player.accessCode,
-      username: player.username,
     }).catch((err) => console.error("signup email failed", err));
 
     return NextResponse.json({
       status: "new" as const,
-      username: player.username,
       code: player.accessCode,
     });
   } catch (err) {

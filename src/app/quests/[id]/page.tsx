@@ -2,10 +2,11 @@ import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
-import { players, quizAnswers, submissions } from "@/db/schema";
+import { quizAnswers, submissions } from "@/db/schema";
 import { getQuest } from "@/lib/quests";
-import { getPlayerId } from "@/lib/session";
-import { QueueIndicator } from "@/components/queue-indicator";
+import { getCurrentPlayer } from "@/lib/auth";
+import { PlayerShell } from "@/components/player-shell";
+import { BackLink } from "@/components/back-link";
 import { MediaView } from "./media-view";
 import { QuizView } from "./quiz-view";
 import { TextView } from "./text-view";
@@ -15,13 +16,10 @@ export default async function QuestPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const playerId = await getPlayerId();
-  if (!playerId) redirect("/");
-
-  const player = await db.query.players.findFirst({
-    where: eq(players.id, playerId),
-  });
-  if (!player || player.isBlocked) redirect("/");
+  const player = await getCurrentPlayer();
+  if (!player) redirect("/");
+  if (!player.username) redirect("/me");
+  const playerId = player.id;
 
   const { id } = await params;
   const quest = await getQuest(id);
@@ -45,23 +43,23 @@ export default async function QuestPage({
           </p>
         );
       } else {
+        // Reveal the correct answer ONLY once the quest is completed. Until
+        // then correctOptionId never reaches the client (no view-source
+        // cheating), so answering shows no result.
+        const reveal =
+          quest.state === "completed" && quest.revealAfterAnswer;
         body = (
           <QuizView
-            // correctOptionId deliberately NOT sent to the client before
-            // answering — no cheating via view-source.
             quest={{
               id: quest.id,
-              title: quest.title,
-              prompt: quest.prompt,
               options: quest.options,
-              revealAfterAnswer: quest.revealAfterAnswer,
               points: quest.points,
             }}
             serverAnswer={
               answer
                 ? {
                     chosenOptionId: answer.chosenOptionId,
-                    ...(quest.revealAfterAnswer
+                    ...(reveal
                       ? {
                           isCorrect: answer.isCorrect,
                           correctOptionId: quest.correctOptionId,
@@ -169,37 +167,35 @@ export default async function QuestPage({
   }
 
   return (
-    <>
-      <QueueIndicator />
-      <main className="mx-auto w-full max-w-xl px-4 py-8">
-        <Link
-          href={`/quests?t=${quest.type}`}
-          className="mb-4 inline-block text-sm underline"
-        >
-          ← All {quest.type === "quiz" ? "quizzes" : `${quest.type} quests`}
-        </Link>
-        <h1 className="mb-2 text-3xl">{quest.title}</h1>
-        <p className="mb-6 leading-relaxed">{quest.prompt}</p>
+    <PlayerShell username={player.username} avatarUrl={player.avatarUrl}>
+      <BackLink href={`/quests?t=${quest.type}`}>
+        {quest.type === "quiz"
+          ? "All quizzes"
+          : quest.type === "text"
+            ? "All Write quests"
+            : "All Camera quests"}
+      </BackLink>
+      <h1 className="mb-2 text-3xl">{quest.title}</h1>
+      <p className="mb-6 leading-relaxed">{quest.prompt}</p>
 
-        {quest.state === "voting" && quest.type !== "quiz" && (
-          <div className="mb-4 rounded-lg bg-sand p-3 text-center text-sm">
-            <p className="font-medium">Submissions are closed — voting is on!</p>
-            <Link
-              href={`/vote?q=${quest.id}`}
-              className="mt-1 inline-block underline"
-            >
-              Go vote on this quest →
-            </Link>
-          </div>
-        )}
-        {quest.state === "completed" && (
-          <p className="mb-4 rounded-lg bg-sage p-3 text-center text-sm font-medium">
-            This quest is finished — points are on the leaderboard! 🏆
-          </p>
-        )}
+      {quest.state === "voting" && quest.type !== "quiz" && (
+        <div className="mb-4 rounded-lg bg-sand p-3 text-center text-sm">
+          <p className="font-medium">Submissions are closed — voting is on!</p>
+          <Link
+            href={`/vote?q=${quest.id}`}
+            className="mt-1 inline-block underline"
+          >
+            Go vote on this quest →
+          </Link>
+        </div>
+      )}
+      {quest.state === "completed" && (
+        <p className="mb-4 rounded-lg bg-sage p-3 text-center text-sm font-medium">
+          This quest is finished — points are on the leaderboard! 🏆
+        </p>
+      )}
 
-        {body}
-      </main>
-    </>
+      {body}
+    </PlayerShell>
   );
 }

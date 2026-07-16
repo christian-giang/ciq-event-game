@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { Avatar } from "@/components/avatar";
 
 type FeedSubmission = {
   id: string;
   bodyText: string | null;
   mediaUrl: string | null;
   kind: string;
-  username: string;
+  username: string | null;
+  avatarUrl: string | null;
 };
 
 /**
@@ -89,7 +91,10 @@ export function VoteFeed({
         const isVoted = voted.has(s.id);
         return (
           <div key={s.id} className="card rounded-2xl p-4">
-            <p className="label-caps mb-2 text-xs">{s.username}</p>
+            <div className="mb-3 flex items-center gap-2">
+              <Avatar name={s.username} avatarUrl={s.avatarUrl} size={28} />
+              <span className="font-medium">{s.username}</span>
+            </div>
             {s.bodyText && (
               <p className="mb-3 whitespace-pre-wrap leading-relaxed">
                 {s.bodyText}

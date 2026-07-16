@@ -13,7 +13,7 @@ export function QueueIndicator() {
   if (pending === 0 && rejected === 0) return null;
 
   return (
-    <div className="sticky top-0 z-50 border-b border-line bg-sand px-4 py-2 text-center text-sm">
+    <div className="border-b border-line bg-sand px-4 py-2 text-center text-sm">
       {pending > 0 && (
         <p>
           <span className="font-semibold">
