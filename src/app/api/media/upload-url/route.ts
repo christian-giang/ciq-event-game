@@ -12,10 +12,12 @@ const bodySchema = z.object({
 });
 
 /**
- * Step A of a media submission: tells the client where to PUT the bytes.
- * Local driver: our own /api/media/upload endpoint (dev).
- * Vercel Blob: to be wired at first deploy — the client upload() flow via
- * @vercel/blob/client replaces the plain PUT there.
+ * Step A of a media submission for the LOCAL driver only: tells the client
+ * where to PUT the bytes (our own /api/media/upload endpoint).
+ *
+ * With STORAGE_DRIVER=vercel-blob the client never calls this — it uploads
+ * straight to Blob via @vercel/blob/client, authorized by
+ * /api/media/blob-upload.
  */
 export async function POST(req: Request) {
   const playerId = await getPlayerId();
@@ -55,11 +57,9 @@ export async function POST(req: Request) {
     });
   }
 
-  // STORAGE_DRIVER=vercel-blob — wired at first deploy (Phase 6):
-  // handleUpload token exchange from @vercel/blob/client, pathname
-  // submissions/{playerId}/{clientUuid}.{ext}, allowOverwrite: true.
+  // vercel-blob uploads bypass this endpoint entirely (see /api/media/blob-upload).
   return NextResponse.json(
-    { error: "vercel-blob driver not wired yet — deploy-time task." },
-    { status: 501 },
+    { error: "This driver uploads via /api/media/blob-upload." },
+    { status: 400 },
   );
 }

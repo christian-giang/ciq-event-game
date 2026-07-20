@@ -18,11 +18,13 @@ async function main() {
   console.log(`Quest config OK (${quests.length} quests).`);
 
   // Quests: insert missing only — never clobber quests edited via /admin.
-  const inserted = await db
-    .insert(questsTable)
-    .values(quests.map((q) => ({ id: q.id, data: q })))
-    .onConflictDoNothing()
-    .returning({ id: questsTable.id });
+  const inserted = quests.length
+    ? await db
+        .insert(questsTable)
+        .values(quests.map((q) => ({ id: q.id, data: q })))
+        .onConflictDoNothing()
+        .returning({ id: questsTable.id })
+    : [];
   console.log(
     `Quests: ${inserted.length} inserted, ${quests.length - inserted.length} already in DB (kept).`,
   );

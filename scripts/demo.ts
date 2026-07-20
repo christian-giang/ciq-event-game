@@ -165,10 +165,12 @@ async function main() {
   );
 
   // Ensure all quests exist, reset every state to released, then apply demo states.
-  await db
-    .insert(questsTable)
-    .values(seedQuests.map((q) => ({ id: q.id, data: q })))
-    .onConflictDoNothing();
+  if (seedQuests.length) {
+    await db
+      .insert(questsTable)
+      .values(seedQuests.map((q) => ({ id: q.id, data: q })))
+      .onConflictDoNothing();
+  }
   await db.execute(
     sql`UPDATE quests SET data = jsonb_set(data, '{state}', '"released"'::jsonb)`,
   );

@@ -94,7 +94,7 @@ export function PlayerShell({
               href="/quests"
               className="min-w-0 truncate text-center font-heading text-xl"
             >
-              Teodora &amp; Uroš
+              Combat IQ
             </Link>
             <Link
               href="/me"
@@ -152,7 +152,7 @@ function ScheduleModal({ onClose }: { onClose: () => void }) {
       <div className="card max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl p-6 sm:rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="label-caps text-xs">The evening</p>
+            <p className="label-caps text-xs">The event</p>
             <h2 className="text-2xl">Schedule</h2>
           </div>
           <button

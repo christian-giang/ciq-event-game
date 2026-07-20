@@ -12,7 +12,7 @@ export function DemoPlayerButton() {
         <p className="font-medium">Player view</p>
         <p className="text-sm text-muted">
           Opens the game as <span className="font-mono">demo-player</span> in
-          this browser — see exactly what guests see. Your admin login stays
+          this browser — see exactly what players see. Your admin login stays
           active.
         </p>
         {error && <p className="text-sm text-danger">{error}</p>}

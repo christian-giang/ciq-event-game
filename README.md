@@ -1,13 +1,15 @@
-# Teodora & Uroš — Wedding Party Game
+# Combat IQ — Team Event Game
 
-A one-evening party game for ~200 wedding guests, played on their own phones.
-Guests sign up with an email, get a color-animal username and a 6-digit access
-code, complete quests (quiz / text / photo / video), vote on each other's
-submissions and follow a live leaderboard.
+A team event game for Combat IQ, played on players' own phones. This is a
+branch of the Teodora & Uroš wedding game, repurposed for a dry run of the
+same app at a Combat IQ team event before the wedding. Players sign up with an
+email, get a color-animal username and a 6-digit access code, complete quests
+(quiz / text / photo / video), vote on each other's submissions and follow a
+live leaderboard.
 
 Built to survive bad venue wifi and iPhones: offline-first submissions,
 installable PWA, no accounts, no passwords. Used once, then exported and
-deleted (30 days after the wedding at the latest).
+deleted (30 days after the event at the latest).
 
 ## Local development (no cloud accounts needed)
 

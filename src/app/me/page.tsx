@@ -22,7 +22,7 @@ export default async function MePage() {
           <p className="label-caps mb-2">Almost there</p>
           <h1 className="mb-2 text-3xl">Set up your profile</h1>
           <p className="mb-6 text-sm text-muted">
-            Tell us your name so the couple and the other guests know who you
+            Tell us your name so everyone else at the event knows who you
             are. Add a picture if you like — then you&apos;re in!
           </p>
           <ProfileForm

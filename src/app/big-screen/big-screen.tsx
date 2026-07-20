@@ -54,9 +54,9 @@ export function BigScreen() {
     <main className="flex min-h-screen flex-col p-8 lg:p-12">
       <header className="mb-8 text-center">
         <p className="label-caps">
-          {data?.frozen ? "Final results" : "The wedding game"}
+          {data?.frozen ? "Final results" : "The team event game"}
         </p>
-        <h1 className="text-5xl lg:text-6xl">Teodora &amp; Uroš</h1>
+        <h1 className="text-5xl lg:text-6xl">Combat IQ</h1>
         {data?.frozen && (
           <p className="mt-2 text-2xl">❄️ The leaderboard is final!</p>
         )}
@@ -116,7 +116,7 @@ export function BigScreen() {
             </>
           ) : (
             <p className="text-center text-2xl text-muted">
-              Photos appear here as guests complete quests 📷
+              Photos appear here as players complete quests 📷
             </p>
           )}
         </section>

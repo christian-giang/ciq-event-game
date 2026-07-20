@@ -1,0 +1,39 @@
+import { upload } from "@vercel/blob/client";
+import { EXT_BY_CONTENT_TYPE } from "@/lib/media/server";
+
+/**
+ * Client-visible storage driver. Mirrors the server's STORAGE_DRIVER, but the
+ * browser can only read NEXT_PUBLIC_* vars, so this one must be set to match.
+ */
+export function clientStorageDriver(): "local" | "vercel-blob" {
+  return process.env.NEXT_PUBLIC_STORAGE_DRIVER === "vercel-blob"
+    ? "vercel-blob"
+    : "local";
+}
+
+/**
+ * Uploads bytes straight from the browser to Vercel Blob via the
+ * @vercel/blob/client handshake — the bytes never pass through our serverless
+ * function (so they dodge the request-body size limit and don't cost function
+ * time). /api/media/blob-upload authorizes the player and issues the token.
+ * Returns the public Blob URL to store on the submission/profile.
+ */
+export async function uploadToBlob(opts: {
+  clientUuid: string;
+  blob: Blob;
+  contentType: string;
+  onProgress?: (pct: number) => void;
+}): Promise<{ url: string }> {
+  const ext = EXT_BY_CONTENT_TYPE[opts.contentType] ?? "bin";
+  // addRandomSuffix is false server-side, so the same clientUuid overwrites
+  // itself — retries are idempotent, matching the local driver.
+  const result = await upload(`media/${opts.clientUuid}.${ext}`, opts.blob, {
+    access: "public",
+    handleUploadUrl: "/api/media/blob-upload",
+    contentType: opts.contentType,
+    onUploadProgress: opts.onProgress
+      ? ({ percentage }) => opts.onProgress!(percentage)
+      : undefined,
+  });
+  return { url: result.url };
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { openDB, type IDBPDatabase } from "idb";
+import { clientStorageDriver, uploadToBlob } from "@/lib/media/client-upload";
 
 /**
  * The offline-first submission queue. Everything a player submits is
@@ -228,35 +229,48 @@ class Outbox {
       // checkpoint the resulting URL so retries skip straight to step B.
       let current = this.items.get(item.clientUuid) ?? item;
       if (current.kind === "media" && !current.blobUrl && current.blob) {
-        const target = await fetch("/api/media/upload-url", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        if (clientStorageDriver() === "vercel-blob") {
+          // Prod: bytes go browser → Vercel Blob directly, then we checkpoint
+          // the public URL so retries skip straight to step B.
+          const { url } = await uploadToBlob({
             clientUuid: current.clientUuid,
-            contentType: current.blobContentType,
-          }),
-        });
-        if (!target.ok) {
-          const body = await target.json().catch(() => null);
-          if (target.status >= 400 && target.status < 500) {
-            await this.update(current, {
-              status: "rejected",
-              lastError:
-                (body as { error?: string } | null)?.error ??
-                `Rejected (${target.status})`,
-            });
-            return;
+            blob: current.blob,
+            contentType: current.blobContentType ?? "application/octet-stream",
+            onProgress: (pct) => this.progress(current.clientUuid, pct),
+          });
+          await this.update(current, { blobUrl: url });
+        } else {
+          // Local dev: get a PUT target from our own endpoint, then PUT bytes.
+          const target = await fetch("/api/media/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              clientUuid: current.clientUuid,
+              contentType: current.blobContentType,
+            }),
+          });
+          if (!target.ok) {
+            const body = await target.json().catch(() => null);
+            if (target.status >= 400 && target.status < 500) {
+              await this.update(current, {
+                status: "rejected",
+                lastError:
+                  (body as { error?: string } | null)?.error ??
+                  `Rejected (${target.status})`,
+              });
+              return;
+            }
+            throw new Error(`upload-url failed (${target.status})`);
           }
-          throw new Error(`upload-url failed (${target.status})`);
+          const { url } = (await target.json()) as { url: string };
+          const uploaded = await xhrPut(
+            url,
+            current.blob,
+            current.blobContentType ?? "application/octet-stream",
+            (pct) => this.progress(current.clientUuid, pct),
+          );
+          await this.update(current, { blobUrl: uploaded.url });
         }
-        const { url } = (await target.json()) as { url: string };
-        const uploaded = await xhrPut(
-          url,
-          current.blob,
-          current.blobContentType ?? "application/octet-stream",
-          (pct) => this.progress(current.clientUuid, pct),
-        );
-        await this.update(current, { blobUrl: uploaded.url });
         current = this.items.get(item.clientUuid) ?? current;
       }
 

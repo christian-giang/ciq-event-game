@@ -3,10 +3,22 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar";
+import { clientStorageDriver, uploadToBlob } from "@/lib/media/client-upload";
 import { MediaRejection, processAvatar } from "@/lib/media/process";
 
 async function uploadAvatar(blob: Blob): Promise<string> {
   const clientUuid = crypto.randomUUID();
+
+  if (clientStorageDriver() === "vercel-blob") {
+    const { url } = await uploadToBlob({
+      clientUuid,
+      blob,
+      contentType: "image/jpeg",
+    });
+    return url;
+  }
+
+  // Local dev driver: two-step through our own endpoint.
   const target = await fetch("/api/media/upload-url", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

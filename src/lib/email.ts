@@ -10,9 +10,9 @@ export async function sendAccessCodeEmail(opts: {
   to: string;
   code: string;
 }): Promise<void> {
-  const subject = "Your wedding game access code";
+  const subject = "Your Combat IQ game access code";
   const text = [
-    `Welcome to Teodora & Uroš's wedding game!`,
+    `Welcome to the Combat IQ team event game!`,
     ``,
     `Your access code: ${opts.code}`,
     ``,
@@ -28,7 +28,7 @@ export async function sendAccessCodeEmail(opts: {
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM ?? "Wedding Game <onboarding@resend.dev>",
+    from: process.env.EMAIL_FROM ?? "Combat IQ Game <onboarding@resend.dev>",
     to: opts.to,
     subject,
     text,

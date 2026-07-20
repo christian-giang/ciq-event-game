@@ -16,13 +16,13 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Teodora & Uroš — Wedding Game",
-  description: "The wedding party game.",
+  title: "Combat IQ — Team Event Game",
+  description: "The Combat IQ team event game.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Wedding Game",
+    title: "CIQ Game",
   },
 };
 

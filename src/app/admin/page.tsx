@@ -162,7 +162,7 @@ export default async function AdminPage({
         <section>
           {allSubmissions.length === 0 ? (
             <p className="text-sm text-muted">
-              No submissions yet — they appear here as guests play.
+              No submissions yet — they appear here as players play.
             </p>
           ) : (
             <ul className="space-y-2">

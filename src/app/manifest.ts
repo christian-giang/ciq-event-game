@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Teodora & Uroš — Wedding Game",
-    short_name: "Wedding Game",
+    name: "Combat IQ — Team Event Game",
+    short_name: "CIQ Game",
     description: "Complete quests, earn points, climb the leaderboard.",
     start_url: "/",
     display: "standalone",
