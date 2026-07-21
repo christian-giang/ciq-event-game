@@ -22,7 +22,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture_pageview: false, // captured manually below (App Router SPA nav)
       capture_pageleave: true,
       autocapture: true,
-      respect_dnt: true,
+      // Analytics are disclosed on the landing page and anonymous, so we
+      // capture all guests rather than dropping the Do-Not-Track crowd.
+      respect_dnt: false,
       // Session replay is fully masked — no text or input values are recorded.
       session_recording: {
         maskAllInputs: true,
