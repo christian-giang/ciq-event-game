@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { submissions } from "@/db/schema";
 import { getCurrentPlayer } from "@/lib/auth";
-import { getPlayerRank } from "@/lib/leaderboard";
 import { getQuests } from "@/lib/quests";
-import { Avatar } from "@/components/avatar";
 import { PlayerShell } from "@/components/player-shell";
 import { CodeReveal, LogoutButton, MySubmission } from "./me-controls";
 import { ProfileForm } from "./profile-form";
@@ -36,13 +34,12 @@ export default async function MePage() {
   }
 
   // --- Normal profile ---
-  const [mySubmissions, quests, rank] = await Promise.all([
+  const [mySubmissions, quests] = await Promise.all([
     db.query.submissions.findMany({
       where: eq(submissions.playerId, player.id),
       orderBy: desc(submissions.createdAt),
     }),
     getQuests(),
-    getPlayerRank(player.id),
   ]);
   const questTitle = new Map(quests.map((q) => [q.id, q.title]));
 
@@ -52,18 +49,6 @@ export default async function MePage() {
       avatarUrl={player.avatarUrl}
       activated={player.isActivated}
     >
-      <div className="mb-6 flex items-center gap-4">
-        <Avatar name={player.username} avatarUrl={player.avatarUrl} size={64} />
-        <div className="min-w-0">
-          <h1 className="truncate text-3xl">{player.username}</h1>
-          {rank && (
-            <p className="text-muted">
-              Rank {rank.rank} · {rank.points} points
-            </p>
-          )}
-        </div>
-      </div>
-
       <section className="card mb-6 rounded-2xl p-4">
         <p className="label-caps mb-3 text-xs">Edit your profile</p>
         <ProfileForm
