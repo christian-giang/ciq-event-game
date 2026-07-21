@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { outbox } from "@/lib/outbox/outbox";
 import { useOutbox } from "@/components/outbox-provider";
 
@@ -48,6 +49,7 @@ export function QuizView({ quest, serverAnswer }: QuizProps) {
       questId: quest.id,
       payload: { chosenOptionId: selected },
     });
+    track("quiz_answered", { questId: quest.id });
   }
 
   return (

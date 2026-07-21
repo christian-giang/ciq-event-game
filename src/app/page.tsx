@@ -29,7 +29,9 @@ export default async function LandingPage() {
           <br />
           <br />
           We store your email address only to send you your access code.
-          Everything is deleted 30 days after the event.
+          Everything is deleted 30 days after the event. We also collect
+          anonymous usage analytics (no names, no message content) to see how
+          the game is going.
         </div>
 
         <SignupForm />

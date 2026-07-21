@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { Avatar } from "@/components/avatar";
 
 type FeedSubmission = {
@@ -36,6 +37,7 @@ export function VoteFeed({
   async function toggle(submissionId: string) {
     const isVoted = voted.has(submissionId);
     if (!isVoted && !budgetLeft) return;
+    if (!isVoted) track("vote_cast", { submissionId });
 
     // Optimistic flip.
     const before = new Set(voted);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { outbox } from "@/lib/outbox/outbox";
 import { useOutbox } from "@/components/outbox-provider";
 
@@ -48,6 +49,7 @@ export function TextView({ quest, serverSubmission }: TextProps) {
       questId: quest.id,
       payload: { bodyText: text },
     });
+    track("submission_created", { type: "text", questId: quest.id });
     setDraft("");
     setEditing(false);
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { track } from "@/lib/analytics";
 import { outbox } from "@/lib/outbox/outbox";
 import { useOutbox } from "@/components/outbox-provider";
 import {
@@ -97,6 +98,11 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
       payload: { mediaKind: picked.mediaKind },
       blob: picked.blob,
       blobContentType: picked.contentType,
+    });
+    track("submission_created", {
+      type: "media",
+      mediaKind: picked.mediaKind,
+      questId: quest.id,
     });
     setPicked(null);
     setReplacing(false);

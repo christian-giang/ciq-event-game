@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar";
+import { track } from "@/lib/analytics";
 import { uploadPicture } from "@/lib/media/client-upload";
 import { MediaRejection, processAvatar } from "@/lib/media/process";
 
@@ -69,6 +70,7 @@ export function ProfileForm({
       setAvatarUrl(url);
       setPickedBlob(null);
       setSaved(true);
+      track("profile_saved", { onboarding, hasAvatar: !!url });
       if (onboarding) {
         router.push("/quests");
       } else {

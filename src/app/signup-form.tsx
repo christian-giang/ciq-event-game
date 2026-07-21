@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 
 type SignupResult =
   | { status: "new"; code: string }
@@ -37,6 +38,7 @@ export function SignupForm() {
         // cookie is what actually keeps you signed in.
         localStorage.setItem("wg_code", data.code);
       }
+      track("signup_completed", { status: data.status });
       setResult(data);
     } catch {
       setError("Network hiccup — try again.");

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Work_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { OutboxProvider } from "@/components/outbox-provider";
+import { PostHogProvider } from "@/components/posthog-provider";
 import { SwRegister } from "@/components/sw-register";
 import "./globals.css";
 
@@ -45,7 +46,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SwRegister />
-        <OutboxProvider>{children}</OutboxProvider>
+        <PostHogProvider>
+          <OutboxProvider>{children}</OutboxProvider>
+        </PostHogProvider>
         <SpeedInsights />
       </body>
     </html>
