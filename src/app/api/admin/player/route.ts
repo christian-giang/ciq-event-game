@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { players } from "@/db/schema";
+import { invalidateLeaderboardCache } from "@/lib/leaderboard";
 import { isAdmin } from "@/lib/session";
 
 const bodySchema = z.object({
@@ -31,5 +32,32 @@ export async function POST(req: Request) {
   if (!updated) {
     return NextResponse.json({ error: "No such player." }, { status: 404 });
   }
+  return NextResponse.json({ ok: true });
+}
+
+/**
+ * Hard-deletes a player, freeing their email + username to sign up fresh.
+ * Their submissions, quiz answers and votes cascade away with them.
+ */
+export async function DELETE(req: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+
+  const id = new URL(req.url).searchParams.get("id");
+  const parsed = z.uuid().safeParse(id);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Missing player id." }, { status: 400 });
+  }
+
+  const [deleted] = await db
+    .delete(players)
+    .where(eq(players.id, parsed.data))
+    .returning({ id: players.id });
+
+  if (!deleted) {
+    return NextResponse.json({ error: "No such player." }, { status: 404 });
+  }
+  invalidateLeaderboardCache();
   return NextResponse.json({ ok: true });
 }

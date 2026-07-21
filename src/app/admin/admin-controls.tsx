@@ -87,28 +87,53 @@ export function PlayerRow(props: {
           )}
         </button>
       </div>
-      <button
-        type="button"
-        disabled={busy}
-        className="field shrink-0 rounded-lg px-3 py-2 text-sm font-medium"
-        onClick={async () => {
-          if (
-            !props.isBlocked &&
-            !confirm(`Block ${displayName}? They can no longer log in.`)
-          ) {
-            return;
-          }
-          setBusy(true);
-          await post("/api/admin/player", {
-            playerId: props.id,
-            isBlocked: !props.isBlocked,
-          });
-          setBusy(false);
-          router.refresh();
-        }}
-      >
-        {props.isBlocked ? "Unblock" : "Block"}
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          className="field rounded-lg px-3 py-2 text-sm font-medium"
+          onClick={async () => {
+            if (
+              !props.isBlocked &&
+              !confirm(`Block ${displayName}? They can no longer log in.`)
+            ) {
+              return;
+            }
+            setBusy(true);
+            await post("/api/admin/player", {
+              playerId: props.id,
+              isBlocked: !props.isBlocked,
+            });
+            setBusy(false);
+            router.refresh();
+          }}
+        >
+          {props.isBlocked ? "Unblock" : "Block"}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          className="rounded-lg px-3 py-2 text-sm font-medium text-danger underline disabled:opacity-50"
+          onClick={async () => {
+            if (
+              !confirm(
+                `Delete ${displayName}? Removes them and all their submissions and votes, and frees their email to sign up again. This can't be undone.`,
+              )
+            ) {
+              return;
+            }
+            setBusy(true);
+            await fetch(
+              `/api/admin/player?id=${encodeURIComponent(props.id)}`,
+              { method: "DELETE" },
+            );
+            setBusy(false);
+            router.refresh();
+          }}
+        >
+          Delete
+        </button>
+      </div>
     </li>
   );
 }
