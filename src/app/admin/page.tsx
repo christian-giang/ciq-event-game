@@ -9,6 +9,7 @@ import { AdminLogin } from "./admin-login";
 import { FreezeToggle, PlayerRow, SubmissionRow } from "./admin-controls";
 import { DemoPlayerButton } from "./demo-player-button";
 import { QuestsSection } from "./quest-editor";
+import { SimulationControls } from "./simulation-controls";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -120,6 +121,10 @@ export default async function AdminPage({
 
           <section className="card mb-6 rounded-2xl p-4">
             <DemoPlayerButton />
+          </section>
+
+          <section className="card mb-6 rounded-2xl p-4">
+            <SimulationControls />
           </section>
 
           <section className="card rounded-2xl p-4">
