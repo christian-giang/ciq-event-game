@@ -42,6 +42,63 @@ export async function sendAccessCodeEmail(opts: {
   if (error) throw new Error(`Resend failed: ${error.message}`);
 }
 
+export type TestEmailResult = { driver: string; ok: boolean; message: string };
+
+/**
+ * Sends a diagnostic email and reports what happened — never throws, so the
+ * admin UI can show the exact outcome (wrong driver, missing key, unverified
+ * domain, or success with the Resend id).
+ */
+export async function sendTestEmail(to: string): Promise<TestEmailResult> {
+  const driver = process.env.EMAIL_DRIVER ?? "console";
+  const subject = "Test email — Combat IQ game";
+  const text =
+    "If you're reading this, Resend is set up correctly for the Combat IQ game. 🎉";
+
+  if (driver === "console") {
+    console.log(
+      `\n=== EMAIL (console driver) ===\nTo: ${to}\nSubject: ${subject}\n\n${text}\n==============================\n`,
+    );
+    return {
+      driver,
+      ok: false,
+      message:
+        "EMAIL_DRIVER is 'console' — the message was printed to the server logs, not sent. Set EMAIL_DRIVER=resend (plus RESEND_API_KEY and EMAIL_FROM) and redeploy to send real email.",
+    };
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { driver, ok: false, message: "RESEND_API_KEY is not set." };
+  }
+
+  const from = process.env.EMAIL_FROM ?? "Combat IQ Game <onboarding@resend.dev>";
+  try {
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      text,
+      html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;color:#2b2b2b;">${text}</div>`,
+    });
+    if (error) {
+      return { driver, ok: false, message: `Resend rejected it: ${error.message}` };
+    }
+    return {
+      driver,
+      ok: true,
+      message: `Sent to ${to} from "${from}". Check the inbox (and spam). Resend id: ${data?.id ?? "—"}`,
+    };
+  } catch (e) {
+    return {
+      driver,
+      ok: false,
+      message: e instanceof Error ? e.message : "Unknown error sending email.",
+    };
+  }
+}
+
 /** Branded HTML version of the access-code email (inline styles for email
  *  clients). The code is digits-only, so no escaping is needed. */
 function accessCodeHtml(code: string): string {
