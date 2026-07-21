@@ -1,6 +1,31 @@
 import { Resend } from "resend";
 
 /**
+ * Resolve the Resend key from the env, defending against the classic paste
+ * mistakes: trailing/leading whitespace (newline) and surrounding quotes,
+ * either of which makes Resend report "API key is invalid".
+ */
+function resolveResendKey(): { key: string | null; cleaned: boolean } {
+  const raw = process.env.RESEND_API_KEY;
+  if (!raw) return { key: null, cleaned: false };
+  let key = raw.trim();
+  let cleaned = key !== raw;
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+    cleaned = true;
+  }
+  return { key: key || null, cleaned };
+}
+
+function resolveFrom(): string {
+  const from = process.env.EMAIL_FROM?.trim().replace(/^["']|["']$/g, "");
+  return from || "Combat IQ Game <onboarding@resend.dev>";
+}
+
+/**
  * EMAIL_DRIVER=console (local dev): prints the mail to the terminal.
  * EMAIL_DRIVER=resend  (preview/prod): sends via Resend.
  * Email is the *backup* channel — signup shows the code on screen; only
@@ -26,14 +51,14 @@ export async function sendAccessCodeEmail(opts: {
     return;
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const { key } = resolveResendKey();
+  if (!key) {
     throw new Error("EMAIL_DRIVER=resend but RESEND_API_KEY is not set");
   }
 
-  const resend = new Resend(apiKey);
+  const resend = new Resend(key);
   const { error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM ?? "Combat IQ Game <onboarding@resend.dev>",
+    from: resolveFrom(),
     to: opts.to,
     subject,
     text,
@@ -67,14 +92,19 @@ export async function sendTestEmail(to: string): Promise<TestEmailResult> {
     };
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const { key, cleaned } = resolveResendKey();
+  if (!key) {
     return { driver, ok: false, message: "RESEND_API_KEY is not set." };
   }
 
-  const from = process.env.EMAIL_FROM ?? "Combat IQ Game <onboarding@resend.dev>";
+  // A fingerprint that helps diagnose a bad paste without leaking the secret.
+  const fp = `key length ${key.length}, starts "re_": ${
+    key.startsWith("re_") ? "yes" : "no"
+  }${cleaned ? "; trimmed stray whitespace/quotes from the env value" : ""}`;
+
+  const from = resolveFrom();
   try {
-    const resend = new Resend(apiKey);
+    const resend = new Resend(key);
     const { data, error } = await resend.emails.send({
       from,
       to,
@@ -83,7 +113,11 @@ export async function sendTestEmail(to: string): Promise<TestEmailResult> {
       html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;color:#2b2b2b;">${text}</div>`,
     });
     if (error) {
-      return { driver, ok: false, message: `Resend rejected it: ${error.message}` };
+      return {
+        driver,
+        ok: false,
+        message: `Resend rejected it: ${error.message}. (${fp})`,
+      };
     }
     return {
       driver,
@@ -94,7 +128,7 @@ export async function sendTestEmail(to: string): Promise<TestEmailResult> {
     return {
       driver,
       ok: false,
-      message: e instanceof Error ? e.message : "Unknown error sending email.",
+      message: `${e instanceof Error ? e.message : "Unknown error"} (${fp})`,
     };
   }
 }
