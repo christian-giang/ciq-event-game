@@ -25,10 +25,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // Analytics are disclosed on the landing page and anonymous, so we
       // capture all guests rather than dropping the Do-Not-Track crowd.
       respect_dnt: false,
-      // Session replay is fully masked — no text or input values are recorded.
+      // Session replay records real text/inputs so you can see what guests do.
+      // The access code (a login credential) and email input are individually
+      // redacted via the `ph-no-capture` class on those elements.
       session_recording: {
-        maskAllInputs: true,
-        maskTextSelector: "*",
+        maskAllInputs: false,
       },
     });
   }, []);

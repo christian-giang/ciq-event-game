@@ -68,7 +68,7 @@ export function SignupForm() {
     return (
       <div className="space-y-4 text-center">
         <p className="label-caps">Your secret access code</p>
-        <p className="font-mono text-5xl font-bold tracking-[0.15em]">
+        <p className="ph-no-capture font-mono text-5xl font-bold tracking-[0.15em]">
           {result.code}
         </p>
         <button
@@ -121,7 +121,7 @@ export function SignupForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="field w-full rounded-lg px-4 py-3"
+          className="ph-no-capture field w-full rounded-lg px-4 py-3"
         />
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}

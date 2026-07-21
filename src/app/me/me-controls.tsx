@@ -12,7 +12,7 @@ export function CodeReveal({ code }: { code: string }) {
     <div className="flex items-center gap-3">
       <button
         type="button"
-        className="field rounded-lg px-4 py-2 font-mono text-2xl tracking-[0.15em]"
+        className="ph-no-capture field rounded-lg px-4 py-2 font-mono text-2xl tracking-[0.15em]"
         onClick={() => setShown((v) => !v)}
       >
         {shown ? code : "••••••"}

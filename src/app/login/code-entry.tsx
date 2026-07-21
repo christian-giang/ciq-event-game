@@ -74,7 +74,7 @@ export function CodeEntry() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between gap-2">
+      <div className="ph-no-capture flex justify-between gap-2">
         {digits.map((digit, i) => (
           <input
             key={i}
