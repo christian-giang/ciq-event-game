@@ -10,6 +10,7 @@ import { ActivateAll } from "./activate-all";
 import { FreezeToggle, PlayerRow, SubmissionRow } from "./admin-controls";
 import { DemoPlayerButton } from "./demo-player-button";
 import { EmailTest } from "./email-test";
+import { PostHogTest } from "./posthog-test";
 import { QuestsSection } from "./quest-editor";
 import { SimulationControls } from "./simulation-controls";
 
@@ -131,6 +132,10 @@ export default async function AdminPage({
 
           <section className="card mb-6 rounded-2xl p-4">
             <EmailTest />
+          </section>
+
+          <section className="card mb-6 rounded-2xl p-4">
+            <PostHogTest />
           </section>
 
           <section className="card rounded-2xl p-4">
