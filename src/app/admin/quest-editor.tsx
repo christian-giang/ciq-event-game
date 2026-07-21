@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Quest, QuestState } from "@/content/quests";
+import { ConfirmButton } from "@/components/confirm-button";
 import { uploadPicture } from "@/lib/media/client-upload";
 import { MediaRejection, processPhoto } from "@/lib/media/process";
 
@@ -237,14 +238,6 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
   async function advance(quest: Quest) {
     const next = nextState(quest);
     if (!next) return;
-    if (
-      next.state === "completed" &&
-      !confirm(
-        `Complete "${quest.title}"? Its points go on the leaderboard and it locks for good.`,
-      )
-    ) {
-      return;
-    }
     setAdvancing(quest.id);
     await saveQuest({ ...quest, state: next.state });
     setAdvancing(null);
@@ -252,13 +245,6 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
   }
 
   async function remove(quest: Quest) {
-    if (
-      !confirm(
-        `Delete "${quest.title}"? This removes the quest and every submission, answer and vote attached to it — permanently.`,
-      )
-    ) {
-      return;
-    }
     setDeleting(quest.id);
     try {
       const res = await fetch(
@@ -341,14 +327,15 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
               </div>
               <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                 {next && (
-                  <button
-                    type="button"
+                  <ConfirmButton
                     disabled={advancing === q.id}
+                    needsConfirm={next.state === "completed"}
+                    confirmLabel="Complete — sure?"
                     className="btn-primary rounded-lg px-3 py-2 text-sm font-semibold"
-                    onClick={() => advance(q)}
+                    onConfirm={() => advance(q)}
                   >
                     {advancing === q.id ? "…" : next.label}
-                  </button>
+                  </ConfirmButton>
                 )}
                 <button
                   type="button"
@@ -361,14 +348,14 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
                 >
                   Edit
                 </button>
-                <button
-                  type="button"
+                <ConfirmButton
                   disabled={deleting === q.id}
+                  confirmLabel="Delete for good?"
                   className="rounded-lg px-3 py-2 text-sm font-medium text-danger underline disabled:opacity-50"
-                  onClick={() => remove(q)}
+                  onConfirm={() => remove(q)}
                 >
                   {deleting === q.id ? "…" : "Delete"}
-                </button>
+                </ConfirmButton>
               </div>
             </li>
           );

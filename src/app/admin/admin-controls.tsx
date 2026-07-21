@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmButton } from "@/components/confirm-button";
 
 async function post(url: string, body: unknown): Promise<boolean> {
   const res = await fetch(url, {
@@ -27,17 +28,12 @@ export function FreezeToggle({ frozen }: { frozen: boolean }) {
           leaderboard.
         </p>
       </div>
-      <button
-        type="button"
+      <ConfirmButton
         disabled={busy}
+        needsConfirm={!frozen}
+        confirmLabel="Freeze — sure?"
         className="btn-primary shrink-0 rounded-lg px-4 py-2 font-semibold"
-        onClick={async () => {
-          if (
-            !frozen &&
-            !confirm("Freeze the game? Players can no longer submit or vote.")
-          ) {
-            return;
-          }
+        onConfirm={async () => {
           setBusy(true);
           await post("/api/admin/freeze", { frozen: !frozen });
           setBusy(false);
@@ -45,7 +41,7 @@ export function FreezeToggle({ frozen }: { frozen: boolean }) {
         }}
       >
         {frozen ? "Unfreeze" : "Freeze"}
-      </button>
+      </ConfirmButton>
     </div>
   );
 }
@@ -88,17 +84,12 @@ export function PlayerRow(props: {
         </button>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
+        <ConfirmButton
           disabled={busy}
+          needsConfirm={!props.isBlocked}
+          confirmLabel="Block — sure?"
           className="field rounded-lg px-3 py-2 text-sm font-medium"
-          onClick={async () => {
-            if (
-              !props.isBlocked &&
-              !confirm(`Block ${displayName}? They can no longer log in.`)
-            ) {
-              return;
-            }
+          onConfirm={async () => {
             setBusy(true);
             await post("/api/admin/player", {
               playerId: props.id,
@@ -109,30 +100,22 @@ export function PlayerRow(props: {
           }}
         >
           {props.isBlocked ? "Unblock" : "Block"}
-        </button>
-        <button
-          type="button"
+        </ConfirmButton>
+        <ConfirmButton
           disabled={busy}
+          confirmLabel="Delete for good?"
           className="rounded-lg px-3 py-2 text-sm font-medium text-danger underline disabled:opacity-50"
-          onClick={async () => {
-            if (
-              !confirm(
-                `Delete ${displayName}? Removes them and all their submissions and votes, and frees their email to sign up again. This can't be undone.`,
-              )
-            ) {
-              return;
-            }
+          onConfirm={async () => {
             setBusy(true);
-            await fetch(
-              `/api/admin/player?id=${encodeURIComponent(props.id)}`,
-              { method: "DELETE" },
-            );
+            await fetch(`/api/admin/player?id=${encodeURIComponent(props.id)}`, {
+              method: "DELETE",
+            });
             setBusy(false);
             router.refresh();
           }}
         >
           Delete
-        </button>
+        </ConfirmButton>
       </div>
     </li>
   );

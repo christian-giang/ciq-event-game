@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmButton } from "@/components/confirm-button";
 
 export function CodeReveal({ code }: { code: string }) {
   const [shown, setShown] = useState(false);
@@ -61,12 +62,12 @@ export function MySubmission(props: {
             </p>
           )}
         </div>
-        <button
-          type="button"
+        <ConfirmButton
           disabled={busy}
           className="field shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-danger"
-          onClick={async () => {
-            if (!confirm("Delete this submission for good?")) return;
+          armedClassName="btn-primary shrink-0 rounded-lg px-3 py-2 text-sm font-semibold"
+          confirmLabel="Delete for good?"
+          onConfirm={async () => {
             setBusy(true);
             await fetch("/api/submissions/delete", {
               method: "POST",
@@ -78,7 +79,7 @@ export function MySubmission(props: {
           }}
         >
           Delete
-        </button>
+        </ConfirmButton>
       </div>
       {props.mediaUrl &&
         (props.kind === "video" ? (

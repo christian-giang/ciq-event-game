@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmButton } from "@/components/confirm-button";
 
 export function SimulationControls() {
   const router = useRouter();
@@ -10,14 +11,6 @@ export function SimulationControls() {
   const [err, setErr] = useState<string | null>(null);
 
   async function run(kind: "seed" | "clear") {
-    if (
-      kind === "clear" &&
-      !confirm(
-        "Delete ALL simulation data? Your real players, quests and submissions are kept.",
-      )
-    ) {
-      return;
-    }
     setBusy(kind);
     setErr(null);
     setMsg(null);
@@ -61,14 +54,14 @@ export function SimulationControls() {
         >
           {busy === "seed" ? "Adding…" : "Run simulation"}
         </button>
-        <button
-          type="button"
+        <ConfirmButton
           disabled={busy !== null}
-          onClick={() => run("clear")}
+          confirmLabel="Delete all sim data?"
+          onConfirm={() => run("clear")}
           className="field rounded-lg px-4 py-2 text-sm font-medium text-danger disabled:opacity-50"
         >
           {busy === "clear" ? "Clearing…" : "Clear simulation data"}
-        </button>
+        </ConfirmButton>
       </div>
       {msg && <p className="mt-3 rounded-lg bg-sage p-3 text-sm">{msg}</p>}
       {err && (
