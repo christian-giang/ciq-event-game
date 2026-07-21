@@ -17,6 +17,7 @@ export default async function ResultsPage() {
   const player = await getCurrentPlayer();
   if (!player) redirect("/");
   if (!player.username) redirect("/me");
+  if (!player.isActivated) redirect("/quests");
 
   const [results, frozen] = await Promise.all([getQuestResults(), isFrozen()]);
 

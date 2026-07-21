@@ -52,6 +52,7 @@ export function PlayerRow(props: {
   email: string;
   accessCode: string;
   isBlocked: boolean;
+  isActivated: boolean;
   createdAt: string;
 }) {
   const router = useRouter();
@@ -69,6 +70,9 @@ export function PlayerRow(props: {
           {props.isBlocked && (
             <span className="ml-2 text-sm text-danger">blocked</span>
           )}
+          {!props.isActivated && (
+            <span className="ml-2 text-sm text-muted">not activated</span>
+          )}
         </p>
         <p className="truncate text-sm text-muted">{props.email}</p>
         <button
@@ -83,7 +87,27 @@ export function PlayerRow(props: {
           )}
         </button>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          className={
+            props.isActivated
+              ? "field rounded-lg px-3 py-2 text-sm font-medium"
+              : "btn-primary rounded-lg px-3 py-2 text-sm font-semibold"
+          }
+          onClick={async () => {
+            setBusy(true);
+            await post("/api/admin/activate", {
+              playerId: props.id,
+              isActivated: !props.isActivated,
+            });
+            setBusy(false);
+            router.refresh();
+          }}
+        >
+          {props.isActivated ? "Deactivate" : "Activate"}
+        </button>
         <ConfirmButton
           disabled={busy}
           needsConfirm={!props.isBlocked}

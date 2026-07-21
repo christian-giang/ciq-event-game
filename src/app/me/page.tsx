@@ -47,7 +47,11 @@ export default async function MePage() {
   const questTitle = new Map(quests.map((q) => [q.id, q.title]));
 
   return (
-    <PlayerShell username={player.username} avatarUrl={player.avatarUrl}>
+    <PlayerShell
+      username={player.username}
+      avatarUrl={player.avatarUrl}
+      activated={player.isActivated}
+    >
       <div className="mb-6 flex items-center gap-4">
         <Avatar name={player.username} avatarUrl={player.avatarUrl} size={64} />
         <div className="min-w-0">

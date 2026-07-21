@@ -19,6 +19,7 @@ export default async function QuestPage({
   const player = await getCurrentPlayer();
   if (!player) redirect("/");
   if (!player.username) redirect("/me");
+  if (!player.isActivated) redirect("/quests");
   const playerId = player.id;
 
   const { id } = await params;

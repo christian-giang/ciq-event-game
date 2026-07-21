@@ -25,6 +25,10 @@ export const players = pgTable("players", {
     .notNull()
     .defaultNow(),
   isBlocked: boolean("is_blocked").notNull().default(false),
+  // Players start inactive: they can sign up, set a profile and see the
+  // schedule, but the quests/vote/board stay locked until a host activates
+  // them. Lets you take signups before opening the game.
+  isActivated: boolean("is_activated").notNull().default(false),
 });
 
 export const submissions = pgTable(

@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/session";
 import { isFrozen } from "@/lib/settings";
 import { getQuests } from "@/lib/quests";
 import { AdminLogin } from "./admin-login";
+import { ActivateAll } from "./activate-all";
 import { FreezeToggle, PlayerRow, SubmissionRow } from "./admin-controls";
 import { DemoPlayerButton } from "./demo-player-button";
 import { EmailTest } from "./email-test";
@@ -149,19 +150,26 @@ export default async function AdminPage({
           {allPlayers.length === 0 ? (
             <p className="text-sm text-muted">Nobody has signed up yet.</p>
           ) : (
-            <ul className="space-y-2">
-              {allPlayers.map((p) => (
-                <PlayerRow
-                  key={p.id}
-                  id={p.id}
-                  username={p.username}
-                  email={p.email}
-                  accessCode={p.accessCode}
-                  isBlocked={p.isBlocked}
-                  createdAt={p.createdAt.toISOString()}
-                />
-              ))}
-            </ul>
+            <>
+              <ActivateAll
+                activated={allPlayers.filter((p) => p.isActivated).length}
+                total={allPlayers.length}
+              />
+              <ul className="space-y-2">
+                {allPlayers.map((p) => (
+                  <PlayerRow
+                    key={p.id}
+                    id={p.id}
+                    username={p.username}
+                    email={p.email}
+                    accessCode={p.accessCode}
+                    isBlocked={p.isBlocked}
+                    isActivated={p.isActivated}
+                    createdAt={p.createdAt.toISOString()}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </section>
       )}

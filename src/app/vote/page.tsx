@@ -17,6 +17,7 @@ export default async function VotePage({
   const player = await getCurrentPlayer();
   if (!player) redirect("/");
   if (!player.username) redirect("/me");
+  if (!player.isActivated) redirect("/quests");
   const playerId = player.id;
 
   // Only quests whose voting window is open right now.

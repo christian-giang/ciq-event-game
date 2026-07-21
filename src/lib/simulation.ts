@@ -107,6 +107,7 @@ export async function seedSimulation(): Promise<SeedSummary> {
           username: name,
           accessCode: simCode(i + 1),
           avatarUrl: i % 3 === 0 ? img(`simavatar${i}`, 200, 200) : null,
+          isActivated: true,
         })),
       )
       .returning({ id: players.id });

@@ -70,10 +70,13 @@ export function PlayerShell({
   username,
   avatarUrl,
   children,
+  activated = true,
 }: {
   username: string;
   avatarUrl?: string | null;
   children: React.ReactNode;
+  /** When false, the Board button is disabled (player not activated yet). */
+  activated?: boolean;
 }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
 
@@ -124,13 +127,24 @@ export function PlayerShell({
             <CalendarIcon />
             Schedule
           </button>
-          <Link
-            href="/leaderboard"
-            className="btn-primary flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold"
-          >
-            <TrophyIcon />
-            Board
-          </Link>
+          {activated ? (
+            <Link
+              href="/leaderboard"
+              className="btn-primary flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold"
+            >
+              <TrophyIcon />
+              Board
+            </Link>
+          ) : (
+            <div
+              aria-disabled="true"
+              title="Unlocks once a host activates you"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-paper px-4 py-3 font-semibold text-muted opacity-60"
+            >
+              <TrophyIcon />
+              Board
+            </div>
+          )}
         </div>
       </footer>
 

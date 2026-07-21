@@ -62,6 +62,7 @@ export default async function LeaderboardPage({
   const player = await getCurrentPlayer();
   if (!player) redirect("/");
   if (!player.username) redirect("/me");
+  if (!player.isActivated) redirect("/quests");
   const playerId = player.id;
 
   const { c } = await searchParams;

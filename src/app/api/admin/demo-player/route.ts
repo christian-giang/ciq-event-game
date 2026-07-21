@@ -33,6 +33,7 @@ export async function POST() {
             email: DEMO_EMAIL,
             username: DEMO_USERNAME,
             accessCode: generateCodePool(1)[0],
+            isActivated: true,
           })
           .returning();
       } catch (err) {
@@ -53,10 +54,10 @@ export async function POST() {
     }
   }
 
-  if (demo.isBlocked) {
+  if (demo.isBlocked || !demo.isActivated) {
     await db
       .update(players)
-      .set({ isBlocked: false })
+      .set({ isBlocked: false, isActivated: true })
       .where(eq(players.id, demo.id));
   }
 

@@ -26,6 +26,48 @@ export default async function QuestsPage({
   if (!player) redirect("/");
   if (!player.username) redirect("/me"); // finish onboarding first
 
+  // Not activated yet: signup + profile + schedule only; everything else locked.
+  if (!player.isActivated) {
+    return (
+      <PlayerShell
+        username={player.username}
+        avatarUrl={player.avatarUrl}
+        activated={false}
+      >
+        <div className="card rounded-2xl p-6 text-center">
+          <p className="mb-2 text-4xl">⏳</p>
+          <h1 className="mb-2 text-2xl">You&apos;re signed up!</h1>
+          <p className="mb-4 text-muted">
+            The game hasn&apos;t opened for you yet — a host will activate you
+            shortly. In the meantime you can set up your profile and check the
+            schedule.
+          </p>
+          <Link
+            href="/me"
+            className="btn-primary inline-block rounded-lg px-5 py-3 font-semibold"
+          >
+            Edit my profile
+          </Link>
+        </div>
+
+        <div
+          aria-hidden
+          className="pointer-events-none mt-6 grid select-none grid-cols-2 gap-3 opacity-40"
+        >
+          {[...TYPES, { key: "vote", label: "Vote", icon: "🗳️" }].map((t) => (
+            <div
+              key={t.key}
+              className="card flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl p-4 text-center"
+            >
+              <span className="text-5xl">{t.icon}</span>
+              <span className="text-xl font-medium">{t.label}</span>
+            </div>
+          ))}
+        </div>
+      </PlayerShell>
+    );
+  }
+
   const [activeQuests, votingQuests, answers, subs] = await Promise.all([
     getVisibleQuests(),
     getVotingQuests(),
