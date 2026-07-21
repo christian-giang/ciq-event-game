@@ -30,9 +30,10 @@ export type BringItem = {
 };
 
 export const bring: BringItem[] = [
-  { item: "Swimwear & towel", detail: "There's a pool" },
-  { item: "Sportswear & trainers", detail: "For the afternoon sports" },
-  { item: "Sunscreen & a hat", detail: "We'll be outside" },
-  { item: "Water bottle" },
+  { item: "NO COMPUTER", detail: "Not needed!" },
   { item: "Your phone", detail: "It's the game controller" },
+  { item: "Swimwear & towel", detail: "There's a pool" },
+  { item: "Sportswear", detail: "For the afternoon sports" },
+  { item: "Sunscreen & a hat", detail: "We'll be outside" },
+  { item: "Insect repellent", detail: "To keep bugs away" },
 ];
