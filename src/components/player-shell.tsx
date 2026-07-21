@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { schedule } from "@/content/schedule";
+import { bring, schedule } from "@/content/schedule";
 import { Avatar } from "./avatar";
 import { QueueIndicator } from "./queue-indicator";
 
@@ -156,6 +156,8 @@ export function PlayerShell({
 }
 
 function ScheduleModal({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<"schedule" | "bring">("schedule");
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6"
@@ -167,7 +169,9 @@ function ScheduleModal({ onClose }: { onClose: () => void }) {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="label-caps text-xs">The event</p>
-            <h2 className="text-2xl">Schedule</h2>
+            <h2 className="text-2xl">
+              {tab === "schedule" ? "Schedule" : "What to bring"}
+            </h2>
           </div>
           <button
             type="button"
@@ -179,28 +183,63 @@ function ScheduleModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <ol className="space-y-1">
-          {schedule.map((item) => (
-            <li
-              key={`${item.time}-${item.title}`}
-              className="flex gap-4 border-b border-line py-3 last:border-0"
+        <div className="mb-4 flex gap-1 rounded-xl border border-line bg-paper p-1">
+          {(["schedule", "bring"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${
+                tab === t ? "bg-accent text-white shadow" : "text-muted"
+              }`}
             >
-              <span className="w-24 shrink-0 font-heading text-base leading-snug text-accent">
-                {item.time}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{item.title}</p>
-                {item.detail && (
-                  <p className="text-sm text-muted">{item.detail}</p>
-                )}
-              </div>
-            </li>
+              {t === "schedule" ? "Schedule" : "What to bring"}
+            </button>
           ))}
-        </ol>
+        </div>
 
-        <p className="mt-4 text-center text-xs text-muted">
-          Times are approximate — go with the flow ♥
-        </p>
+        {tab === "schedule" ? (
+          <>
+            <ol className="space-y-1">
+              {schedule.map((item) => (
+                <li
+                  key={`${item.time}-${item.title}`}
+                  className="flex gap-4 border-b border-line py-3 last:border-0"
+                >
+                  <span className="w-24 shrink-0 font-heading text-base leading-snug text-accent">
+                    {item.time}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{item.title}</p>
+                    {item.detail && (
+                      <p className="text-sm text-muted">{item.detail}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-center text-xs text-muted">
+              Times are approximate — go with the flow ♥
+            </p>
+          </>
+        ) : (
+          <ul className="space-y-1">
+            {bring.map((b) => (
+              <li
+                key={b.item}
+                className="flex gap-3 border-b border-line py-3 last:border-0"
+              >
+                <span className="shrink-0 text-accent">✓</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{b.item}</p>
+                  {b.detail && (
+                    <p className="text-sm text-muted">{b.detail}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
