@@ -37,3 +37,35 @@ export async function uploadToBlob(opts: {
   });
   return { url: result.url };
 }
+
+/**
+ * Upload a single image blob (avatar or quest picture) and return its URL,
+ * transparently using Blob in prod and our local endpoint in dev. Callers
+ * pre-process the image (downscale/crop) before handing it here.
+ */
+export async function uploadPicture(
+  blob: Blob,
+  contentType = "image/jpeg",
+): Promise<string> {
+  const clientUuid = crypto.randomUUID();
+
+  if (clientStorageDriver() === "vercel-blob") {
+    return (await uploadToBlob({ clientUuid, blob, contentType })).url;
+  }
+
+  // Local dev driver: two-step through our own endpoint.
+  const target = await fetch("/api/media/upload-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientUuid, contentType }),
+  });
+  if (!target.ok) throw new Error("Couldn't start the upload.");
+  const { url } = (await target.json()) as { url: string };
+  const put = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: blob,
+  });
+  if (!put.ok) throw new Error("Picture upload failed.");
+  return ((await put.json()) as { url: string }).url;
+}

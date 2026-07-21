@@ -3,37 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar";
-import { clientStorageDriver, uploadToBlob } from "@/lib/media/client-upload";
+import { uploadPicture } from "@/lib/media/client-upload";
 import { MediaRejection, processAvatar } from "@/lib/media/process";
-
-async function uploadAvatar(blob: Blob): Promise<string> {
-  const clientUuid = crypto.randomUUID();
-
-  if (clientStorageDriver() === "vercel-blob") {
-    const { url } = await uploadToBlob({
-      clientUuid,
-      blob,
-      contentType: "image/jpeg",
-    });
-    return url;
-  }
-
-  // Local dev driver: two-step through our own endpoint.
-  const target = await fetch("/api/media/upload-url", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ clientUuid, contentType: "image/jpeg" }),
-  });
-  if (!target.ok) throw new Error("Couldn't start the upload.");
-  const { url } = (await target.json()) as { url: string };
-  const put = await fetch(url, {
-    method: "PUT",
-    headers: { "Content-Type": "image/jpeg" },
-    body: blob,
-  });
-  if (!put.ok) throw new Error("Picture upload failed.");
-  return ((await put.json()) as { url: string }).url;
-}
 
 export function ProfileForm({
   initialName,
@@ -83,7 +54,7 @@ export function ProfileForm({
     setSaved(false);
     try {
       let url = avatarUrl;
-      if (pickedBlob) url = await uploadAvatar(pickedBlob);
+      if (pickedBlob) url = await uploadPicture(pickedBlob);
 
       const res = await fetch("/api/profile", {
         method: "POST",

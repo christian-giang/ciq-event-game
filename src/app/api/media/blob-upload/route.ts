@@ -8,7 +8,7 @@ import {
   MEDIA_MAX_BYTES,
   storageDriver,
 } from "@/lib/media/server";
-import { getPlayerId } from "@/lib/session";
+import { getPlayerId, isAdmin } from "@/lib/session";
 
 /**
  * Vercel Blob client-upload handshake (STORAGE_DRIVER=vercel-blob only).
@@ -34,19 +34,24 @@ export async function POST(req: Request): Promise<NextResponse> {
       request: req,
       body,
       onBeforeGenerateToken: async () => {
-        const playerId = await getPlayerId();
-        if (!playerId) throw new Error("Please log in again.");
-        const player = await db.query.players.findFirst({
-          where: eq(players.id, playerId),
-        });
-        if (!player || player.isBlocked) throw new Error("Not allowed.");
+        // Admins upload quest images; players upload submissions/avatars.
+        let uploader = "admin";
+        if (!(await isAdmin())) {
+          const playerId = await getPlayerId();
+          if (!playerId) throw new Error("Please log in again.");
+          const player = await db.query.players.findFirst({
+            where: eq(players.id, playerId),
+          });
+          if (!player || player.isBlocked) throw new Error("Not allowed.");
+          uploader = playerId;
+        }
 
         return {
           allowedContentTypes: Object.keys(EXT_BY_CONTENT_TYPE),
           maximumSizeInBytes: MEDIA_MAX_BYTES,
           addRandomSuffix: false,
           allowOverwrite: true,
-          tokenPayload: JSON.stringify({ playerId }),
+          tokenPayload: JSON.stringify({ uploader }),
         };
       },
       onUploadCompleted: async () => {

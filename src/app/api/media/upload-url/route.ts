@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { players } from "@/db/schema";
 import { EXT_BY_CONTENT_TYPE, storageDriver } from "@/lib/media/server";
-import { getPlayerId } from "@/lib/session";
+import { getPlayerId, isAdmin } from "@/lib/session";
 
 const bodySchema = z.object({
   clientUuid: z.uuid(),
@@ -20,15 +20,21 @@ const bodySchema = z.object({
  * /api/media/blob-upload.
  */
 export async function POST(req: Request) {
-  const playerId = await getPlayerId();
-  if (!playerId) {
-    return NextResponse.json({ error: "Please log in again." }, { status: 401 });
-  }
-  const player = await db.query.players.findFirst({
-    where: eq(players.id, playerId),
-  });
-  if (!player || player.isBlocked) {
-    return NextResponse.json({ error: "Not allowed." }, { status: 403 });
+  // Admins upload quest images; players upload submissions/avatars.
+  if (!(await isAdmin())) {
+    const playerId = await getPlayerId();
+    if (!playerId) {
+      return NextResponse.json(
+        { error: "Please log in again." },
+        { status: 401 },
+      );
+    }
+    const player = await db.query.players.findFirst({
+      where: eq(players.id, playerId),
+    });
+    if (!player || player.isBlocked) {
+      return NextResponse.json({ error: "Not allowed." }, { status: 403 });
+    }
   }
   // No freeze check here: this only authorizes a byte upload (used by both
   // submissions and profile avatars). The freeze is enforced where it

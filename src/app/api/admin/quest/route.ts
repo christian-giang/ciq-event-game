@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { upsertQuest } from "@/lib/quests";
+import { deleteQuest, upsertQuest } from "@/lib/quests";
+import { invalidateLeaderboardCache } from "@/lib/leaderboard";
 import { isAdmin } from "@/lib/session";
 
 export async function POST(req: Request) {
@@ -29,4 +30,19 @@ export async function POST(req: Request) {
           : "Invalid quest.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
+}
+
+export async function DELETE(req: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "Missing quest id." }, { status: 400 });
+  }
+
+  await deleteQuest(id);
+  invalidateLeaderboardCache();
+  return NextResponse.json({ ok: true });
 }

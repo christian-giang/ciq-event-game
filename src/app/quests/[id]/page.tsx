@@ -176,7 +176,16 @@ export default async function QuestPage({
             : "All Camera quests"}
       </BackLink>
       <h1 className="mb-2 text-3xl">{quest.title}</h1>
-      <p className="mb-6 leading-relaxed">{quest.prompt}</p>
+      <p className="mb-4 leading-relaxed">{quest.prompt}</p>
+
+      {quest.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={quest.imageUrl}
+          alt=""
+          className="mb-6 max-h-80 w-full rounded-lg object-contain"
+        />
+      )}
 
       {quest.state === "voting" && quest.type !== "quiz" && (
         <div className="mb-4 rounded-lg bg-sand p-3 text-center text-sm">

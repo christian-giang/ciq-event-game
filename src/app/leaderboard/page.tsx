@@ -8,6 +8,7 @@ import {
 import { getCurrentPlayer } from "@/lib/auth";
 import { isFrozen } from "@/lib/settings";
 import { Avatar } from "@/components/avatar";
+import { BoardTabs } from "@/components/board-tabs";
 import { PlayerShell } from "@/components/player-shell";
 
 const CATEGORIES: { key: LeaderboardCategory; label: string }[] = [
@@ -81,6 +82,7 @@ export default async function LeaderboardPage({
         {frozen ? "Final results" : "Live standings"}
       </p>
       <h1 className="mb-4 text-3xl">Leaderboard</h1>
+      <BoardTabs active="standings" />
 
       <nav className="mb-4 flex gap-1 overflow-x-auto rounded-xl border border-line bg-paper p-1">
         {CATEGORIES.map((cat) => (

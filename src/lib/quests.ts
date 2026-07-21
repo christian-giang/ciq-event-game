@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { questsTable } from "@/db/schema";
+import { questsTable, quizAnswers, submissions } from "@/db/schema";
 import type { Quest } from "@/content/quests";
 import { questSchema, questsSchema } from "@/content/quests.schema";
 
@@ -67,4 +67,17 @@ export async function upsertQuest(candidate: unknown): Promise<Quest> {
       set: { data: quest, updatedAt: new Date() },
     });
   return quest;
+}
+
+/**
+ * Hard-deletes a quest and everything attached to it (submissions, quiz
+ * answers; votes cascade from submissions). Irreversible — the admin UI
+ * confirms first.
+ */
+export async function deleteQuest(id: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(submissions).where(eq(submissions.questId, id));
+    await tx.delete(quizAnswers).where(eq(quizAnswers.questId, id));
+    await tx.delete(questsTable).where(eq(questsTable.id, id));
+  });
 }

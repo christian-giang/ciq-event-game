@@ -20,6 +20,10 @@ const baseShape = {
   title: z.string().min(1),
   prompt: z.string().min(1),
   state: z.enum(["unreleased", "released", "voting", "completed"]),
+  // Optional media URLs (local /api/media/file/… in dev, Blob URL in prod) —
+  // a loose string, not .url(), so relative local URLs validate too.
+  imageUrl: z.string().min(1).optional(),
+  resultImageUrl: z.string().min(1).optional(),
 };
 
 const mediaQuestSchema = z.object({

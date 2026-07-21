@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Quest, QuestState } from "@/content/quests";
+import { uploadPicture } from "@/lib/media/client-upload";
+import { MediaRejection, processPhoto } from "@/lib/media/process";
 
 const DEFAULT_VOTING = {
   pointsByRank: "12, 8, 5, 3",
@@ -60,6 +62,8 @@ type Draft = {
   prompt: string;
   order: number;
   state: QuestState;
+  imageUrl: string;
+  resultImageUrl: string;
   // quiz
   options: { id: string; label: string }[];
   correctOptionId: string;
@@ -93,6 +97,8 @@ function toDraft(quest: Quest | null, nextOrder: number): Draft {
     prompt: "",
     order: nextOrder,
     state: "unreleased",
+    imageUrl: "",
+    resultImageUrl: "",
     options: [
       { id: "opt-1", label: "" },
       { id: "opt-2", label: "" },
@@ -115,6 +121,8 @@ function toDraft(quest: Quest | null, nextOrder: number): Draft {
     prompt: quest.prompt,
     order: quest.order,
     state: quest.state,
+    imageUrl: quest.imageUrl ?? "",
+    resultImageUrl: quest.resultImageUrl ?? "",
   };
   if (quest.type === "quiz") {
     draft.options = quest.options.map((o) => ({ ...o }));
@@ -143,6 +151,8 @@ function draftToQuest(d: Draft): unknown {
     title: d.title.trim(),
     prompt: d.prompt.trim(),
     state: d.state,
+    ...(d.imageUrl ? { imageUrl: d.imageUrl } : {}),
+    ...(d.resultImageUrl ? { resultImageUrl: d.resultImageUrl } : {}),
   };
   const voting = {
     pointsByRank: d.pointsByRank
@@ -207,6 +217,7 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [advancing, setAdvancing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const nextOrder = quests.reduce((m, q) => Math.max(m, q.order), 0) + 1;
 
@@ -240,6 +251,33 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
     router.refresh();
   }
 
+  async function remove(quest: Quest) {
+    if (
+      !confirm(
+        `Delete "${quest.title}"? This removes the quest and every submission, answer and vote attached to it — permanently.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(quest.id);
+    try {
+      const res = await fetch(
+        `/api/admin/quest?id=${encodeURIComponent(quest.id)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Could not delete.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Network hiccup — try again.");
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
@@ -270,6 +308,12 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
           onCancel={() => setEditing(null)}
           onSave={() => save(editing)}
         />
+      )}
+
+      {error && !editing && (
+        <p className="mb-3 rounded-lg bg-blush p-3 text-sm text-danger">
+          {error}
+        </p>
       )}
 
       <ul className="space-y-2">
@@ -316,6 +360,14 @@ export function QuestsSection({ quests }: { quests: Quest[] }) {
                   }}
                 >
                   Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={deleting === q.id}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-danger underline disabled:opacity-50"
+                  onClick={() => remove(q)}
+                >
+                  {deleting === q.id ? "…" : "Delete"}
                 </button>
               </div>
             </li>
@@ -452,6 +504,19 @@ function QuestForm(props: {
           required
           value={draft.prompt}
           onChange={(e) => set({ prompt: e.target.value })}
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <ImagePicker
+          label="Question image (optional)"
+          url={draft.imageUrl}
+          onChange={(url) => set({ imageUrl: url })}
+        />
+        <ImagePicker
+          label="Result image (optional)"
+          url={draft.resultImageUrl}
+          onChange={(url) => set({ resultImageUrl: url })}
         />
       </div>
 
@@ -664,5 +729,71 @@ function QuestForm(props: {
         </button>
       </div>
     </form>
+  );
+}
+
+/** Upload a single optional picture (downscaled) and hand back its URL. */
+function ImagePicker({
+  label,
+  url,
+  onChange,
+}: {
+  label: string;
+  url: string;
+  onChange: (url: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function pick(file: File | undefined) {
+    if (!file) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      const blob = await processPhoto(file);
+      onChange(await uploadPicture(blob));
+    } catch (e) {
+      setErr(
+        e instanceof MediaRejection ? e.message : "Couldn't upload that image.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt=""
+          className="mb-2 max-h-40 w-full rounded-lg object-contain"
+        />
+      )}
+      <div className="flex items-center gap-3">
+        <label className="field cursor-pointer rounded-lg px-3 py-2 text-sm font-medium">
+          {busy ? "Uploading…" : url ? "Change" : "Upload"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={busy}
+            onChange={(e) => pick(e.target.files?.[0])}
+          />
+        </label>
+        {url && (
+          <button
+            type="button"
+            className="text-sm text-muted underline"
+            onClick={() => onChange("")}
+          >
+            Remove
+          </button>
+        )}
+      </div>
+      {err && <p className="mt-1 text-sm text-danger">{err}</p>}
+    </div>
   );
 }

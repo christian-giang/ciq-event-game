@@ -33,6 +33,10 @@ export type QuestBase = {
   title: string;
   prompt: string;
   state: QuestState;
+  /** Optional picture shown with the question/prompt. */
+  imageUrl?: string;
+  /** Optional picture shown with the result (on the Results board). */
+  resultImageUrl?: string;
 };
 
 export type MediaQuest = QuestBase & {
