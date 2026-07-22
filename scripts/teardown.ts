@@ -21,8 +21,8 @@ async function main() {
   }
 
   await db.execute(sql`
-    TRUNCATE players, submissions, quiz_answers, votes,
-             code_pool, username_pool, login_attempts, settings
+    TRUNCATE players, submissions, quiz_answers, votes, bonus_points,
+             quests, code_pool, username_pool, login_attempts, settings
     CASCADE
   `);
   console.log("Database wiped.");
