@@ -95,9 +95,15 @@ export function PlayerShell({
             </Link>
             <Link
               href="/quests"
-              className="min-w-0 truncate text-center font-heading text-xl"
+              aria-label="Combat IQ — home"
+              className="flex min-w-0 flex-1 items-center justify-center px-2"
             >
-              Combat IQ
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/ciq-logo.png"
+                alt="Combat IQ"
+                className="h-6 w-auto max-w-full object-contain"
+              />
             </Link>
             <Link
               href="/me"

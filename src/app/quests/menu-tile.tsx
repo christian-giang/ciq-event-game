@@ -46,11 +46,11 @@ export function MenuTile({
     <button
       type="button"
       onClick={go}
-      className="card flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl p-4 text-center transition-transform active:scale-[0.98]"
+      className="card flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl p-3 text-center transition-transform active:scale-[0.98]"
     >
-      <div className="flex h-20 w-20 items-center justify-center">
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center">
         {failed ? (
-          <span className="text-5xl">{icon}</span>
+          <span className="text-7xl">{icon}</span>
         ) : (
           <video
             ref={video}
@@ -64,7 +64,9 @@ export function MenuTile({
           />
         )}
       </div>
-      <span className="text-xl font-medium">{label}</span>
+      <span className="text-lg font-medium leading-tight">
+        <span aria-hidden>{icon}</span> {label}
+      </span>
       {children}
     </button>
   );
