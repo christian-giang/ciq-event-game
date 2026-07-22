@@ -4,8 +4,9 @@ import { db } from "@/db";
 import { bonusPoints, loginAttempts, players, submissions } from "@/db/schema";
 import { isAdmin } from "@/lib/session";
 import { getLeaderboardMode, isFrozen } from "@/lib/settings";
-import { DEMO_EMAIL } from "@/lib/leaderboard";
+import { DEMO_EMAIL, getLeaderboards } from "@/lib/leaderboard";
 import { getQuests } from "@/lib/quests";
+import { Avatar } from "@/components/avatar";
 import { questTemplateIds } from "@/content/quest-template";
 import { AdminLogin } from "./admin-login";
 import { ActivateAll } from "./activate-all";
@@ -28,6 +29,7 @@ const TABS = [
   { key: "players", label: "Players" },
   { key: "quests", label: "Quests" },
   { key: "submissions", label: "Submissions" },
+  { key: "leaderboard", label: "Leaderboard" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -75,6 +77,7 @@ export default async function AdminPage({
       getQuests(),
     ]);
   const leaderboardMode = await getLeaderboardMode();
+  const board = (await getLeaderboards()).overall;
 
   // Recent bonus awards, grouped by batch (newest first).
   const bonusRows = await db
@@ -122,6 +125,7 @@ export default async function AdminPage({
     players: allPlayers.length,
     quests: allQuests.length,
     submissions: allSubmissions.length,
+    leaderboard: null,
   };
 
   return (
@@ -273,6 +277,42 @@ export default async function AdminPage({
                 />
               ))}
             </ul>
+          )}
+        </section>
+      )}
+
+      {tab === "leaderboard" && (
+        <section>
+          <p className="mb-3 text-sm text-muted">
+            Full standings (always absolute, regardless of the players&apos;
+            view). Includes quiz, voting, submission and bonus points.
+          </p>
+          {board.length === 0 ? (
+            <p className="text-sm text-muted">No eligible players yet.</p>
+          ) : (
+            <ol className="space-y-2">
+              {board.map((e) => (
+                <li
+                  key={e.playerId}
+                  className="card flex items-center gap-3 rounded-2xl p-3"
+                >
+                  <span className="w-8 shrink-0 text-center font-heading text-xl">
+                    {e.rank === 1
+                      ? "🥇"
+                      : e.rank === 2
+                        ? "🥈"
+                        : e.rank === 3
+                          ? "🥉"
+                          : e.rank}
+                  </span>
+                  <Avatar name={e.username} avatarUrl={e.avatarUrl} size={32} />
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {e.username}
+                  </span>
+                  <span className="shrink-0 font-semibold">{e.points}</span>
+                </li>
+              ))}
+            </ol>
           )}
         </section>
       )}
