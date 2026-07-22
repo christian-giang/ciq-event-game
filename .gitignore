@@ -47,6 +47,7 @@ exports/
 # keep the env template
 !.env.example
 
-# unused raw 3D source — only animations-shared/character.min.glb + clips/ ship
+# Raw 3D source kept local only — the app ships public/animations-video/
+# (short WebM clips + WebP posters rendered offline from these GLBs).
 /public/animations/
-/public/animations-shared/character.glb
+/public/animations-shared/

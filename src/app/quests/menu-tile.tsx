@@ -1,29 +1,14 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Component, type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 
-// 3D is client-only and lazy — three.js never touches the first paint / SSR.
-const MenuCharacter = dynamic(
-  () => import("@/components/menu-character").then((m) => m.MenuCharacter),
-  { ssr: false, loading: () => null },
-);
-
-/** If WebGL/3D throws, show the emoji instead of breaking the tile. */
-class Fallback extends Component<
-  { fallback: ReactNode; children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
-  }
-}
-
+/**
+ * Menu tile with a pre-rendered fighter animation. At rest it shows the poster
+ * (first frame, transparent WebP); on tap it plays the short WebM once, then
+ * navigates. The clips were rendered offline from the shared character GLB, so
+ * there's no three.js on the client — just a tiny video per icon.
+ */
 export function MenuTile({
   href,
   label,
@@ -38,16 +23,24 @@ export function MenuTile({
   children?: ReactNode;
 }) {
   const router = useRouter();
-  const [playing, setPlaying] = useState(false);
+  const video = useRef<HTMLVideoElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   function go() {
-    if (playing) return;
-    setPlaying(true);
-    // Let the clip play, then navigate.
+    if (busy) return;
+    setBusy(true);
+    const v = video.current;
+    if (v) {
+      try {
+        v.currentTime = 0;
+        void v.play();
+      } catch {
+        // ignore — we navigate regardless
+      }
+    }
     window.setTimeout(() => router.push(href), 1100);
   }
-
-  const emoji = <span className="text-5xl">{icon}</span>;
 
   return (
     <button
@@ -55,10 +48,21 @@ export function MenuTile({
       onClick={go}
       className="card flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl p-4 text-center transition-transform active:scale-[0.98]"
     >
-      <div className="h-20 w-20">
-        <Fallback fallback={emoji}>
-          <MenuCharacter clip={clip} playing={playing} />
-        </Fallback>
+      <div className="flex h-20 w-20 items-center justify-center">
+        {failed ? (
+          <span className="text-5xl">{icon}</span>
+        ) : (
+          <video
+            ref={video}
+            src={`/animations-video/${clip}.webm`}
+            poster={`/animations-video/${clip}.webp`}
+            muted
+            playsInline
+            preload="none"
+            onError={() => setFailed(true)}
+            className="h-full w-full object-contain"
+          />
+        )}
       </div>
       <span className="text-xl font-medium">{label}</span>
       {children}
