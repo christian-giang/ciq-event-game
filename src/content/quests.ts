@@ -37,6 +37,8 @@ export type QuestBase = {
   imageUrl?: string;
   /** Optional picture shown with the result (on the Results board). */
   resultImageUrl?: string;
+  /** Optional text revealed with the result (on the Results board). */
+  resultText?: string;
 };
 
 export type MediaQuest = QuestBase & {

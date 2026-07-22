@@ -24,6 +24,7 @@ const baseShape = {
   // a loose string, not .url(), so relative local URLs validate too.
   imageUrl: z.string().min(1).optional(),
   resultImageUrl: z.string().min(1).optional(),
+  resultText: z.string().min(1).max(2000).optional(),
 };
 
 const mediaQuestSchema = z.object({

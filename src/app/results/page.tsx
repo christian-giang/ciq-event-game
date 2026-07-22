@@ -66,15 +66,22 @@ function ResultCard({ result }: { result: QuestResult }) {
         <VotedResult result={result} />
       )}
 
-      {result.resultImageUrl && (
+      {(result.resultImageUrl || result.resultText) && (
         <div className="mt-3">
           <p className="label-caps mb-1 text-xs">Result</p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={result.resultImageUrl}
-            alt=""
-            className="max-h-64 w-full rounded-lg object-contain"
-          />
+          {result.resultText && (
+            <p className="mb-2 whitespace-pre-wrap text-sm leading-relaxed">
+              {result.resultText}
+            </p>
+          )}
+          {result.resultImageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={result.resultImageUrl}
+              alt=""
+              className="max-h-64 w-full rounded-lg object-contain"
+            />
+          )}
         </div>
       )}
     </section>

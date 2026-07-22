@@ -37,6 +37,7 @@ type Common = {
   prompt: string;
   imageUrl?: string;
   resultImageUrl?: string;
+  resultText?: string;
 };
 
 export type QuestResult =
@@ -108,6 +109,7 @@ export async function getQuestResults(): Promise<QuestResult[]> {
       prompt: quest.prompt,
       imageUrl: quest.imageUrl,
       resultImageUrl: quest.resultImageUrl,
+      resultText: quest.resultText,
     };
 
     if (quest.type === "quiz") {

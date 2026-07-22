@@ -65,6 +65,7 @@ type Draft = {
   state: QuestState;
   imageUrl: string;
   resultImageUrl: string;
+  resultText: string;
   // quiz
   options: { id: string; label: string }[];
   correctOptionId: string;
@@ -100,6 +101,7 @@ function toDraft(quest: Quest | null, nextOrder: number): Draft {
     state: "unreleased",
     imageUrl: "",
     resultImageUrl: "",
+    resultText: "",
     options: [
       { id: "opt-1", label: "" },
       { id: "opt-2", label: "" },
@@ -124,6 +126,7 @@ function toDraft(quest: Quest | null, nextOrder: number): Draft {
     state: quest.state,
     imageUrl: quest.imageUrl ?? "",
     resultImageUrl: quest.resultImageUrl ?? "",
+    resultText: quest.resultText ?? "",
   };
   if (quest.type === "quiz") {
     draft.options = quest.options.map((o) => ({ ...o }));
@@ -154,6 +157,7 @@ function draftToQuest(d: Draft): unknown {
     state: d.state,
     ...(d.imageUrl ? { imageUrl: d.imageUrl } : {}),
     ...(d.resultImageUrl ? { resultImageUrl: d.resultImageUrl } : {}),
+    ...(d.resultText.trim() ? { resultText: d.resultText.trim() } : {}),
   };
   const voting = {
     pointsByRank: d.pointsByRank
@@ -504,6 +508,17 @@ function QuestForm(props: {
           label="Result image (optional)"
           url={draft.resultImageUrl}
           onChange={(url) => set({ resultImageUrl: url })}
+        />
+      </div>
+
+      <div>
+        <label className={labelCls}>Result text (optional)</label>
+        <textarea
+          className={inputCls}
+          rows={2}
+          value={draft.resultText}
+          onChange={(e) => set({ resultText: e.target.value })}
+          placeholder="Revealed on the Results board when this quest completes"
         />
       </div>
 
