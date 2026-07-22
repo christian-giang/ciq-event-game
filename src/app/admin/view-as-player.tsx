@@ -1,12 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 type P = { id: string; username: string; sim: boolean; activated: boolean };
 
 export function ViewAsPlayer({ players }: { players: P[] }) {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -19,6 +17,9 @@ export function ViewAsPlayer({ players }: { players: P[] }) {
   }, [players, search]);
 
   async function viewAs(id: string) {
+    // Open the tab synchronously (inside the click) so popup blockers allow
+    // it, then point it at /quests once the player session is set.
+    const win = window.open("about:blank", "_blank");
     setBusy(id);
     setErr(null);
     try {
@@ -28,12 +29,15 @@ export function ViewAsPlayer({ players }: { players: P[] }) {
         body: JSON.stringify({ playerId: id }),
       });
       if (!res.ok) {
+        win?.close();
         const d = await res.json().catch(() => null);
         setErr(d?.error ?? "Couldn't switch.");
         return;
       }
-      router.push("/quests");
+      if (win) win.location.href = "/quests";
+      else window.open("/quests", "_blank"); // fallback if blocked
     } catch {
+      win?.close();
       setErr("Network hiccup — try again.");
     } finally {
       setBusy(null);
@@ -44,9 +48,9 @@ export function ViewAsPlayer({ players }: { players: P[] }) {
     <div>
       <p className="font-medium">View as a player</p>
       <p className="mb-3 text-sm text-muted">
-        Log this browser into any player (real or simulated) to see exactly
-        what they see. Your admin access stays — return to /admin anytime.
-        Heads-up: anything you submit or vote happens as that player.
+        Opens the game as any player (real or simulated) in a new tab, so you
+        can see exactly what they see with /admin still open here. Heads-up:
+        anything you submit or vote happens as that player.
       </p>
       <input
         type="text"

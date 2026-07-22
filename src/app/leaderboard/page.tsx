@@ -49,17 +49,17 @@ function Row({
   );
 }
 
-/** A dimmed, anonymised placeholder row that implies more players exist
- *  beyond the ones shown (used in the relative view). */
+/** A frosted-glass placeholder row: blurred silhouettes behind a translucent
+ *  pane, implying more players exist beyond the ones shown (relative view). */
 function GhostRow() {
   return (
     <li
       aria-hidden
-      className="card flex items-center gap-3 rounded-2xl p-3 opacity-40"
+      className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/35 p-3 shadow-sm backdrop-blur-md"
     >
-      <span className="h-9 w-9 shrink-0 rounded-full bg-line" />
-      <span className="h-3.5 w-24 rounded bg-line" />
-      <span className="ml-auto h-3.5 w-7 rounded bg-line" />
+      <span className="h-9 w-9 shrink-0 rounded-full bg-muted/30 blur-[2px]" />
+      <span className="h-3 w-24 rounded-full bg-muted/30 blur-[2px]" />
+      <span className="ml-auto h-3 w-8 rounded-full bg-muted/30 blur-[2px]" />
     </li>
   );
 }
