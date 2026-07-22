@@ -122,7 +122,7 @@ export default async function QuestsPage({
             );
           })}
 
-          <MenuTile href="/vote" label="Vote" clip="drop-kick" icon="🗳️">
+          <MenuTile href="/vote" label="Vote" clip="dropkick" icon="🗳️">
             {votingQuests.length > 0 ? (
               <span className="rounded-full bg-accent px-2 py-0.5 text-sm font-semibold text-white">
                 {votingQuests.length} open now

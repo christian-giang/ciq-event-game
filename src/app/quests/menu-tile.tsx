@@ -46,7 +46,7 @@ export function MenuTile({
     <button
       type="button"
       onClick={go}
-      className="card flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl p-3 text-center transition-transform active:scale-[0.98]"
+      className="card flex aspect-square flex-col items-center justify-center gap-0.5 rounded-2xl p-2 text-center transition-transform active:scale-[0.98]"
     >
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
         {failed ? (
