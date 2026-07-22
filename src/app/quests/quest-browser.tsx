@@ -11,6 +11,7 @@ export type QuestSummary = {
   prompt: string;
   state: QuestState;
   done: boolean;
+  imageUrl?: string;
 };
 
 const VIEW_KEY = "wg_quest_view";
@@ -50,6 +51,14 @@ function ListCard({ quest }: { quest: QuestSummary }) {
         </div>
         <QuestBadge questId={quest.id} serverDone={quest.done} />
       </div>
+      {quest.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={quest.imageUrl}
+          alt=""
+          className="mt-3 max-h-40 w-full rounded-xl object-contain"
+        />
+      )}
       {quest.state !== "released" && (
         <div className="mt-3">
           <StateChip state={quest.state} />
@@ -73,7 +82,16 @@ function CarouselCard({ quest }: { quest: QuestSummary }) {
         {quest.title}
       </h2>
       <p className="mt-4 text-lg leading-relaxed text-muted">{quest.prompt}</p>
-      <div className="flex-1" />
+      {quest.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={quest.imageUrl}
+          alt=""
+          className="mt-4 min-h-0 w-full flex-1 rounded-2xl object-contain"
+        />
+      ) : (
+        <div className="flex-1" />
+      )}
       <div className="mt-4 flex items-center justify-between gap-2">
         <span className="font-medium text-accent">Open this quest →</span>
         <StateChip state={quest.state} />

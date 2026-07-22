@@ -158,6 +158,7 @@ export default async function QuestsPage({
             prompt: quest.prompt,
             state: quest.state,
             done: doneQuestIds.has(quest.id),
+            imageUrl: quest.imageUrl,
           }))}
         />
       )}
