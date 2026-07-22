@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { players, submissions, votes } from "@/db/schema";
@@ -8,19 +8,43 @@ import { getQuest } from "@/lib/quests";
 import { getPlayerId } from "@/lib/session";
 import { isFrozen } from "@/lib/settings";
 
+const MAX_CONTRIBUTORS = 15;
+
 const bodySchema = z.object({
   clientUuid: z.uuid(),
   questId: z.string().min(1),
   bodyText: z.string().min(1).optional(),
   mediaUrl: z.string().min(1).optional(),
   mediaKind: z.enum(["photo", "video"]).optional(),
+  contributorIds: z.array(z.uuid()).max(50).optional(),
 });
+
+/** Keep only real, activated, non-blocked players; drop self and dupes. */
+async function validateContributors(
+  requested: string[] | undefined,
+  uploaderId: string,
+): Promise<string[]> {
+  const unique = [...new Set(requested ?? [])].filter((id) => id !== uploaderId);
+  if (unique.length === 0) return [];
+  const rows = await db
+    .select({ id: players.id })
+    .from(players)
+    .where(
+      and(
+        inArray(players.id, unique),
+        eq(players.isActivated, true),
+        eq(players.isBlocked, false),
+      ),
+    );
+  return rows.map((r) => r.id).slice(0, MAX_CONTRIBUTORS);
+}
 
 type Content = {
   kind: "text" | "photo" | "video";
   bodyText: string | null;
   mediaUrl: string | null;
   mediaKind: "photo" | "video" | null;
+  contributorIds: string[];
 };
 
 /**
@@ -69,6 +93,11 @@ export async function POST(req: Request) {
     );
   }
 
+  const contributorIds = await validateContributors(
+    body.contributorIds,
+    playerId,
+  );
+
   let content: Content;
   if (quest.type === "text") {
     const text = body.bodyText?.trim() ?? "";
@@ -86,7 +115,13 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    content = { kind: "text", bodyText: text, mediaUrl: null, mediaKind: null };
+    content = {
+      kind: "text",
+      bodyText: text,
+      mediaUrl: null,
+      mediaKind: null,
+      contributorIds,
+    };
   } else {
     if (!body.mediaUrl || !body.mediaKind) {
       return NextResponse.json(
@@ -109,6 +144,7 @@ export async function POST(req: Request) {
       bodyText: null,
       mediaUrl: body.mediaUrl,
       mediaKind: body.mediaKind,
+      contributorIds,
     };
   }
 
@@ -175,6 +211,7 @@ async function doSubmit(
           bodyText: content.bodyText,
           mediaUrl: content.mediaUrl,
           mediaKind: content.mediaKind,
+          contributorIds: content.contributorIds,
           clientUuid,
           createdAt: new Date(),
         })
@@ -192,6 +229,7 @@ async function doSubmit(
         bodyText: content.bodyText,
         mediaUrl: content.mediaUrl,
         mediaKind: content.mediaKind,
+        contributorIds: content.contributorIds,
         clientUuid,
       })
       .onConflictDoNothing({ target: submissions.clientUuid })

@@ -39,6 +39,7 @@ export function MySubmission(props: {
   bodyText: string | null;
   mediaUrl: string | null;
   isHidden: boolean;
+  contributors: string[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -56,6 +57,11 @@ export function MySubmission(props: {
               </span>
             )}
           </p>
+          {props.contributors.length > 0 && (
+            <p className="mt-0.5 text-sm text-muted">
+              with {props.contributors.join(", ")}
+            </p>
+          )}
           {props.bodyText && (
             <p className="mt-1 line-clamp-2 text-sm text-muted">
               “{props.bodyText}”

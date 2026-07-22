@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { players, submissions, votes } from "@/db/schema";
@@ -49,6 +49,7 @@ export default async function VotePage({
       kind: submissions.kind,
       username: players.username,
       avatarUrl: players.avatarUrl,
+      contributorIds: submissions.contributorIds,
     })
     .from(submissions)
     .innerJoin(players, eq(players.id, submissions.playerId))
@@ -56,9 +57,10 @@ export default async function VotePage({
       and(
         eq(submissions.questId, quest.id),
         eq(submissions.isHidden, false),
-        // Own submissions are excluded from your feed (self-votes are also
-        // rejected server-side).
+        // Own submissions — and ones you're credited on — are excluded from
+        // your feed (both are also rejected server-side).
         ne(submissions.playerId, playerId),
+        sql`NOT (${submissions.contributorIds} @> ${JSON.stringify([playerId])}::jsonb)`,
       ),
     );
 
@@ -76,8 +78,25 @@ export default async function VotePage({
       ),
     );
 
+  // Resolve co-contributor usernames for display.
+  const contribIds = [...new Set(rows.flatMap((r) => r.contributorIds ?? []))];
+  const nameById = new Map<string, string>();
+  if (contribIds.length) {
+    const names = await db
+      .select({ id: players.id, username: players.username })
+      .from(players)
+      .where(inArray(players.id, contribIds));
+    for (const n of names) if (n.username) nameById.set(n.id, n.username);
+  }
+
   // Stable per-player order; no bias toward early submitters.
   const shuffled = seededShuffle(rows, `${playerId}:${quest.id}`);
+  const feed = shuffled.map((r) => ({
+    ...r,
+    contributors: (r.contributorIds ?? [])
+      .map((id) => nameById.get(id))
+      .filter((n): n is string => !!n),
+  }));
 
   const prev = votable[(index - 1 + votable.length) % votable.length];
   const next = votable[(index + 1) % votable.length];
@@ -109,7 +128,7 @@ export default async function VotePage({
       <p className="mb-4 text-center text-sm text-muted">{quest.prompt}</p>
 
       <VoteFeed
-        submissions={shuffled}
+        submissions={feed}
         initialVoted={myVotes.map((v) => v.submissionId)}
         cap={quest.voting.votesPerPlayer}
       />

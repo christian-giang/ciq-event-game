@@ -47,6 +47,12 @@ export const submissions = pgTable(
       .notNull()
       .defaultNow(),
     isHidden: boolean("is_hidden").notNull().default(false),
+    // Other players credited on a group photo/video (uploader excluded). They
+    // earn the same points as the uploader when the quest completes.
+    contributorIds: jsonb("contributor_ids")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
     // Generated on the device; retries of the same submission upsert on it.
     clientUuid: uuid("client_uuid").notNull().unique(),
   },

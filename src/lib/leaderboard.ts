@@ -43,6 +43,7 @@ export async function getLeaderboards(): Promise<Leaderboards> {
           playerId: submissions.playerId,
           questId: submissions.questId,
           isHidden: submissions.isHidden,
+          contributorIds: submissions.contributorIds,
         })
         .from(submissions),
       db

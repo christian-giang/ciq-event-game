@@ -1,7 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { submissions } from "@/db/schema";
+import { players, submissions } from "@/db/schema";
 import { getCurrentPlayer } from "@/lib/auth";
 import { getQuests } from "@/lib/quests";
 import { PlayerShell } from "@/components/player-shell";
@@ -43,6 +43,19 @@ export default async function MePage() {
   ]);
   const questTitle = new Map(quests.map((q) => [q.id, q.title]));
 
+  // Resolve names of teammates credited on the player's submissions.
+  const contribIds = [
+    ...new Set(mySubmissions.flatMap((s) => s.contributorIds ?? [])),
+  ];
+  const nameById = new Map<string, string>();
+  if (contribIds.length) {
+    const names = await db
+      .select({ id: players.id, username: players.username })
+      .from(players)
+      .where(inArray(players.id, contribIds));
+    for (const n of names) if (n.username) nameById.set(n.id, n.username);
+  }
+
   return (
     <PlayerShell
       username={player.username}
@@ -82,6 +95,9 @@ export default async function MePage() {
                 bodyText={s.bodyText}
                 mediaUrl={s.mediaUrl}
                 isHidden={s.isHidden}
+                contributors={(s.contributorIds ?? [])
+                  .map((id) => nameById.get(id))
+                  .filter((n): n is string => !!n)}
               />
             ))}
           </ul>

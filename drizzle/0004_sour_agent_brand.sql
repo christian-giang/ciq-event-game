@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" ADD COLUMN "contributor_ids" jsonb DEFAULT '[]'::jsonb NOT NULL;

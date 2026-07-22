@@ -52,9 +52,12 @@ export async function POST(req: Request) {
   if (!submission || submission.isHidden) {
     return NextResponse.json({ error: "Unknown submission." }, { status: 404 });
   }
-  if (submission.playerId === voterId) {
+  if (
+    submission.playerId === voterId ||
+    submission.contributorIds.includes(voterId)
+  ) {
     return NextResponse.json(
-      { error: "Nice try — you can't vote for yourself." },
+      { error: "Nice try — you can't vote for your own group's submission." },
       { status: 403 },
     );
   }

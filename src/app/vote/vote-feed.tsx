@@ -11,6 +11,7 @@ type FeedSubmission = {
   kind: string;
   username: string | null;
   avatarUrl: string | null;
+  contributors: string[];
 };
 
 /**
@@ -95,7 +96,14 @@ export function VoteFeed({
           <div key={s.id} className="card rounded-2xl p-4">
             <div className="mb-3 flex items-center gap-2">
               <Avatar name={s.username} avatarUrl={s.avatarUrl} size={28} />
-              <span className="font-medium">{s.username}</span>
+              <span className="min-w-0">
+                <span className="font-medium">{s.username}</span>
+                {s.contributors.length > 0 && (
+                  <span className="block text-xs text-muted">
+                    with {s.contributors.join(", ")}
+                  </span>
+                )}
+              </span>
             </div>
             {s.bodyText && (
               <p className="mb-3 whitespace-pre-wrap leading-relaxed">

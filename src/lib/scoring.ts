@@ -11,6 +11,8 @@ export type ScorableSubmission = {
   id: string;
   playerId: PlayerId;
   isHidden: boolean;
+  /** Co-contributors credited on a group submission (uploader excluded). */
+  contributorIds: PlayerId[];
 };
 
 export type ScorableVote = {
@@ -44,6 +46,15 @@ export function scoreQuest(
         quest.voting;
       const scores = new Map<PlayerId, number>();
 
+      // A submission's points go to the uploader AND every co-contributor.
+      // If a player is credited on more than one submission this quest, they
+      // keep the best — no double-dipping.
+      const award = (submission: ScorableSubmission, points: number) => {
+        for (const playerId of [submission.playerId, ...submission.contributorIds]) {
+          scores.set(playerId, Math.max(scores.get(playerId) ?? 0, points));
+        }
+      };
+
       // Hidden submissions vanish entirely: they earn nothing and their
       // votes stop counting.
       const visible = submissions.filter((s) => !s.isHidden);
@@ -53,9 +64,7 @@ export function scoreQuest(
       // Backup system: not enough votes on the quest → no ranking,
       // everyone who submitted gets participation points.
       if (countedVotes.length < minVotesToRank) {
-        for (const s of visible) {
-          scores.set(s.playerId, participationPoints);
-        }
+        for (const s of visible) award(s, participationPoints);
         return scores;
       }
 
@@ -74,7 +83,7 @@ export function scoreQuest(
         const rankIndex = counts.filter((c) => c > own).length;
         const ranked = pointsByRank[rankIndex] ?? participationPoints;
         // A submitter never scores below participation.
-        scores.set(s.playerId, Math.max(ranked, participationPoints));
+        award(s, Math.max(ranked, participationPoints));
       }
       return scores;
     }

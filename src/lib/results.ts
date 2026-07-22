@@ -19,6 +19,8 @@ export type ResultEntry = {
   kind: string;
   votes: number;
   rank: number;
+  /** Usernames of co-contributors credited on the submission. */
+  contributors: string[];
 };
 
 export type QuizOptionResult = {
@@ -69,6 +71,7 @@ export async function getQuestResults(): Promise<QuestResult[]> {
         bodyText: submissions.bodyText,
         mediaUrl: submissions.mediaUrl,
         kind: submissions.kind,
+        contributorIds: submissions.contributorIds,
       })
       .from(submissions),
     db.select({ submissionId: votes.submissionId }).from(votes),
@@ -157,6 +160,9 @@ export async function getQuestResults(): Promise<QuestResult[]> {
       // Standard competition rank: 1 + how many submissions have more votes.
       const rank = byVotes.filter((x) => x.v > v).length + 1;
       const p = playerById.get(s.playerId);
+      const contributors = (s.contributorIds ?? [])
+        .map((id) => playerById.get(id)?.username)
+        .filter((n): n is string => !!n);
       return {
         submissionId: s.id,
         username: p?.username ?? "?",
@@ -166,6 +172,7 @@ export async function getQuestResults(): Promise<QuestResult[]> {
         kind: s.kind,
         votes: v,
         rank,
+        contributors,
       };
     });
 

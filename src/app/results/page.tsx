@@ -133,6 +133,11 @@ function VotedResult({ result }: { result: VotedR }) {
                 {e.votes} {e.votes === 1 ? "vote" : "votes"}
               </span>
             </div>
+            {e.contributors.length > 0 && (
+              <p className="mb-2 text-xs text-muted">
+                with {e.contributors.join(", ")}
+              </p>
+            )}
             {e.bodyText && (
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {e.bodyText}

@@ -9,6 +9,7 @@ import {
   processPhoto,
   validateVideo,
 } from "@/lib/media/process";
+import { ContributorPicker } from "./contributor-picker";
 
 type MediaProps = {
   quest: {
@@ -27,6 +28,7 @@ type Picked = { blob: Blob; contentType: string; mediaKind: "photo" | "video" };
 export function MediaView({ quest, serverSubmission }: MediaProps) {
   const { items } = useOutbox();
   const [picked, setPicked] = useState<Picked | null>(null);
+  const [contributorIds, setContributorIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [replacing, setReplacing] = useState(false);
@@ -95,7 +97,7 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
     await outbox.enqueue({
       kind: "media",
       questId: quest.id,
-      payload: { mediaKind: picked.mediaKind },
+      payload: { mediaKind: picked.mediaKind, contributorIds },
       blob: picked.blob,
       blobContentType: picked.contentType,
     });
@@ -103,8 +105,10 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
       type: "media",
       mediaKind: picked.mediaKind,
       questId: quest.id,
+      contributors: contributorIds.length,
     });
     setPicked(null);
+    setContributorIds([]);
     setReplacing(false);
   }
 
@@ -182,6 +186,7 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             className="max-h-96 w-full rounded-2xl"
           />
         )}
+        <ContributorPicker value={contributorIds} onChange={setContributorIds} />
         <div className="flex gap-2">
           <button
             type="button"

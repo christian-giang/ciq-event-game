@@ -34,8 +34,13 @@ const text: TextQuest = {
   state: "completed",
 };
 
-function sub(id: string, playerId: string, isHidden = false) {
-  return { id, playerId, isHidden };
+function sub(
+  id: string,
+  playerId: string,
+  isHidden = false,
+  contributorIds: string[] = [],
+) {
+  return { id, playerId, isHidden, contributorIds };
 }
 
 /** n votes for a submission from distinct synthetic voters. */
@@ -146,6 +151,39 @@ describe("scoreQuest — voted quests", () => {
     expect(scores.has("p1")).toBe(false);
     expect(scores.get("p2")).toBe(2);
     expect(scores.get("p3")).toBe(2);
+  });
+
+  it("credits co-contributors with the submission's points", () => {
+    const subs = [
+      sub("s1", "p1", false, ["p1b", "p1c"]),
+      sub("s2", "p2"),
+      sub("s3", "p3"),
+    ];
+    const votes = [
+      ...votesFor("s1", 5),
+      ...votesFor("s2", 3),
+      ...votesFor("s3", 1),
+    ];
+    const scores = scoreQuest(text, subs, votes, []);
+    expect(scores.get("p1")).toBe(12);
+    expect(scores.get("p1b")).toBe(12);
+    expect(scores.get("p1c")).toBe(12);
+    expect(scores.get("p2")).toBe(8);
+  });
+
+  it("a player credited on two submissions keeps the best", () => {
+    const subs = [
+      sub("s1", "p1", false, ["shared"]),
+      sub("s2", "p2", false, ["shared"]),
+      sub("s3", "p3"),
+    ];
+    const votes = [
+      ...votesFor("s1", 5),
+      ...votesFor("s2", 3),
+      ...votesFor("s3", 1),
+    ];
+    const scores = scoreQuest(text, subs, votes, []);
+    expect(scores.get("shared")).toBe(12); // max(12 from s1, 8 from s2)
   });
 
   it("media quests score identically to text quests", () => {
