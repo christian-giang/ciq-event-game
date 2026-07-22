@@ -16,6 +16,7 @@ type MediaProps = {
     id: string;
     mediaKind: "photo" | "video" | "either";
     maxDurationSec?: number;
+    group: boolean;
   };
   serverSubmission: {
     mediaUrl: string;
@@ -186,7 +187,12 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             className="max-h-96 w-full rounded-2xl"
           />
         )}
-        <ContributorPicker value={contributorIds} onChange={setContributorIds} />
+        {quest.group && (
+          <ContributorPicker
+            value={contributorIds}
+            onChange={setContributorIds}
+          />
+        )}
         <div className="flex gap-2">
           <button
             type="button"

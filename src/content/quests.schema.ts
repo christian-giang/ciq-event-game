@@ -25,6 +25,7 @@ const baseShape = {
   imageUrl: z.string().min(1).optional(),
   resultImageUrl: z.string().min(1).optional(),
   resultText: z.string().min(1).max(2000).optional(),
+  group: z.boolean().optional(),
 };
 
 const mediaQuestSchema = z.object({

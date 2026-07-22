@@ -97,7 +97,11 @@ export default async function QuestPage({
       } else {
         body = (
           <TextView
-            quest={{ id: quest.id, maxChars: quest.maxChars }}
+            quest={{
+              id: quest.id,
+              maxChars: quest.maxChars,
+              group: quest.group ?? false,
+            }}
             serverSubmission={
               submission?.bodyText ? { bodyText: submission.bodyText } : null
             }
@@ -147,6 +151,7 @@ export default async function QuestPage({
               id: quest.id,
               mediaKind: quest.mediaKind,
               maxDurationSec: quest.maxDurationSec,
+              group: quest.group ?? false,
             }}
             serverSubmission={
               submission?.mediaUrl && submission.mediaKind
@@ -186,6 +191,16 @@ export default async function QuestPage({
           alt=""
           className="mb-6 max-h-80 w-full rounded-lg object-contain"
         />
+      )}
+
+      {quest.group && quest.state === "released" && (
+        <div className="mb-4 rounded-lg bg-sand p-3 text-sm">
+          <p className="font-medium">👥 Group task</p>
+          <p className="text-muted">
+            Only one person needs to submit — just tag your teammates when you
+            do, so everyone in the group gets the points.
+          </p>
+        </div>
       )}
 
       {quest.state === "voting" && quest.type !== "quiz" && (

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { track } from "@/lib/analytics";
 import { outbox } from "@/lib/outbox/outbox";
 import { useOutbox } from "@/components/outbox-provider";
+import { ContributorPicker } from "./contributor-picker";
 
 type TextProps = {
-  quest: { id: string; maxChars: number };
+  quest: { id: string; maxChars: number; group: boolean };
   serverSubmission: { bodyText: string } | null;
 };
 
@@ -16,6 +17,7 @@ export function TextView({ quest, serverSubmission }: TextProps) {
   const { items } = useOutbox();
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState(false);
+  const [contributorIds, setContributorIds] = useState<string[]>([]);
 
   // Newest local text item for this quest (items are sorted newest-first).
   const local = items.find(
@@ -47,10 +49,15 @@ export function TextView({ quest, serverSubmission }: TextProps) {
     await outbox.enqueue({
       kind: "text",
       questId: quest.id,
-      payload: { bodyText: text },
+      payload: { bodyText: text, contributorIds },
     });
-    track("submission_created", { type: "text", questId: quest.id });
+    track("submission_created", {
+      type: "text",
+      questId: quest.id,
+      contributors: contributorIds.length,
+    });
     setDraft("");
+    setContributorIds([]);
     setEditing(false);
   }
 
@@ -113,6 +120,12 @@ export function TextView({ quest, serverSubmission }: TextProps) {
           That&apos;s {draft.length} characters — this quest allows{" "}
           {quest.maxChars}.
         </p>
+      )}
+      {quest.group && (
+        <ContributorPicker
+          value={contributorIds}
+          onChange={setContributorIds}
+        />
       )}
       <div className="flex gap-2">
         <button

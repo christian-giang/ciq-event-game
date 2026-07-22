@@ -66,6 +66,7 @@ type Draft = {
   imageUrl: string;
   resultImageUrl: string;
   resultText: string;
+  group: boolean;
   // quiz
   options: { id: string; label: string }[];
   correctOptionId: string;
@@ -102,6 +103,7 @@ function toDraft(quest: Quest | null, nextOrder: number): Draft {
     imageUrl: "",
     resultImageUrl: "",
     resultText: "",
+    group: false,
     options: [
       { id: "opt-1", label: "" },
       { id: "opt-2", label: "" },
@@ -127,6 +129,7 @@ function toDraft(quest: Quest | null, nextOrder: number): Draft {
     imageUrl: quest.imageUrl ?? "",
     resultImageUrl: quest.resultImageUrl ?? "",
     resultText: quest.resultText ?? "",
+    group: quest.group ?? false,
   };
   if (quest.type === "quiz") {
     draft.options = quest.options.map((o) => ({ ...o }));
@@ -158,6 +161,7 @@ function draftToQuest(d: Draft): unknown {
     ...(d.imageUrl ? { imageUrl: d.imageUrl } : {}),
     ...(d.resultImageUrl ? { resultImageUrl: d.resultImageUrl } : {}),
     ...(d.resultText.trim() ? { resultText: d.resultText.trim() } : {}),
+    ...(d.group && d.type !== "quiz" ? { group: true } : {}),
   };
   const voting = {
     pointsByRank: d.pointsByRank
@@ -656,6 +660,21 @@ function QuestForm(props: {
             </div>
           )}
         </div>
+      )}
+
+      {draft.type !== "quiz" && (
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={draft.group}
+            onChange={(e) => set({ group: e.target.checked })}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-accent"
+          />
+          <span>
+            Group task — one person submits &amp; tags teammates; everyone
+            credited gets the points. Shows a tag-your-team prompt.
+          </span>
+        </label>
       )}
 
       {draft.type !== "quiz" && (

@@ -39,6 +39,8 @@ export type QuestBase = {
   resultImageUrl?: string;
   /** Optional text revealed with the result (on the Results board). */
   resultText?: string;
+  /** Group task: one person submits and tags teammates; all are credited. */
+  group?: boolean;
 };
 
 export type MediaQuest = QuestBase & {

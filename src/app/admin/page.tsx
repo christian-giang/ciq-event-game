@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/session";
 import { getLeaderboardMode, isFrozen } from "@/lib/settings";
 import { DEMO_EMAIL } from "@/lib/leaderboard";
 import { getQuests } from "@/lib/quests";
+import { questTemplateIds } from "@/content/quest-template";
 import { AdminLogin } from "./admin-login";
 import { ActivateAll } from "./activate-all";
 import {
@@ -18,6 +19,7 @@ import { BonusPoints } from "./bonus-points";
 import { EmailTest } from "./email-test";
 import { PostHogTest } from "./posthog-test";
 import { QuestsSection } from "./quest-editor";
+import { QuestTemplate } from "./quest-template";
 import { SimulationControls } from "./simulation-controls";
 import { ViewAsPlayer } from "./view-as-player";
 
@@ -235,7 +237,17 @@ export default async function AdminPage({
         </section>
       )}
 
-      {tab === "quests" && <QuestsSection quests={allQuests} />}
+      {tab === "quests" && (
+        <>
+          <QuestTemplate
+            loaded={
+              allQuests.filter((q) => questTemplateIds.includes(q.id)).length
+            }
+            total={questTemplateIds.length}
+          />
+          <QuestsSection quests={allQuests} />
+        </>
+      )}
 
       {tab === "submissions" && (
         <section>
