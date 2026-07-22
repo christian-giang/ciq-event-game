@@ -601,14 +601,18 @@ function QuestForm(props: {
                 onChange={(e) => set({ points: Number(e.target.value) })}
               />
             </div>
-            <label className="mt-6 flex items-center gap-2 text-sm">
+            <label className="mt-6 flex items-start gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={draft.revealAfterAnswer}
                 onChange={(e) => set({ revealAfterAnswer: e.target.checked })}
-                className="h-5 w-5 accent-accent"
+                className="mt-0.5 h-5 w-5 shrink-0 accent-accent"
               />
-              Reveal answer after guessing
+              <span>
+                Reveal the correct answer when this quiz is completed. Players
+                never see it until you mark the quiz completed; untick to keep
+                the answer hidden even then.
+              </span>
             </label>
           </div>
         </>
