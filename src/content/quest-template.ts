@@ -1,9 +1,15 @@
 import type { Quest } from "./quests";
 
 /**
- * A ready-made set of quests, loadable/removable from /admin. Images are added
- * per-quest in the editor after loading (they can't live in this file). Loading
- * only inserts quests that aren't already in the DB, so it never clobbers edits.
+ * A ready-made set of quests, loadable/removable from /admin. Loading only
+ * inserts quests that aren't already in the DB, so it never clobbers edits.
+ *
+ * IMAGES: reference bundled files in public/quest-images/ via imageUrl (shown
+ * with the question) and resultImageUrl (shown on the Results board). Because
+ * they live in the repo, they show identically in local dev AND on Vercel with
+ * no uploading. Drop the files into public/quest-images/ with the names below.
+ * (You can still upload per-quest images in the editor instead, but those are
+ * per-environment.)
  */
 
 const VOTING_PHOTO = {
@@ -35,6 +41,7 @@ export const questTemplate: Quest[] = [
     title: "The beginning", prompt: "When was the start of Combat IQ?",
     options: opts(["2020", "2021", "2022", "2023"]), correctOptionId: "b",
     points: 1, revealAfterAnswer: true,
+    resultImageUrl: "/quest-images/founding-meeting.jpg",
     resultText:
       "Tim and Chris started during the Covid pandemic in 2021. Here is one of their first meetings.",
   },
@@ -49,6 +56,7 @@ export const questTemplate: Quest[] = [
   {
     id: "quiz-who-mclaren", order: 3, type: "quiz", state: "unreleased",
     title: "Who is this?", prompt: "Who is this?",
+    imageUrl: "/quest-images/mclaren.jpg",
     options: opts([
       "The creator of the UFC",
       "Cedric's idol",
@@ -61,6 +69,7 @@ export const questTemplate: Quest[] = [
   {
     id: "quiz-who-schmidhuber", order: 4, type: "quiz", state: "unreleased",
     title: "Who is this?", prompt: "Who is this?",
+    imageUrl: "/quest-images/schmidhuber.jpg",
     options: opts([
       "The inventor of AI",
       "Cedric's idol",
