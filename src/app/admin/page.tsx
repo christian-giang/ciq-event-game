@@ -15,11 +15,11 @@ import {
   SubmissionRow,
 } from "./admin-controls";
 import { BonusPoints } from "./bonus-points";
-import { DemoPlayerButton } from "./demo-player-button";
 import { EmailTest } from "./email-test";
 import { PostHogTest } from "./posthog-test";
 import { QuestsSection } from "./quest-editor";
 import { SimulationControls } from "./simulation-controls";
+import { ViewAsPlayer } from "./view-as-player";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -104,6 +104,16 @@ export default async function AdminPage({
     .filter((p) => p.username && !p.isBlocked && p.email !== DEMO_EMAIL)
     .map((p) => ({ id: p.id, username: p.username! }));
 
+  const viewAsPlayers = allPlayers
+    .filter((p) => p.username && p.email !== DEMO_EMAIL)
+    .map((p) => ({
+      id: p.id,
+      username: p.username!,
+      sim: p.email.endsWith("@sim.local"),
+      activated: p.isActivated,
+    }))
+    .sort((a, b) => a.username.localeCompare(b.username));
+
   const playerName = new Map(allPlayers.map((p) => [p.id, p.username]));
   const countLabel: Record<TabKey, number | null> = {
     overview: null,
@@ -169,7 +179,7 @@ export default async function AdminPage({
           </section>
 
           <section className="card mb-6 rounded-2xl p-4">
-            <DemoPlayerButton />
+            <ViewAsPlayer players={viewAsPlayers} />
           </section>
 
           <section className="card mb-6 rounded-2xl p-4">
