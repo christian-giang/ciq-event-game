@@ -9,6 +9,7 @@ import {
   votes,
 } from "@/db/schema";
 import { invalidateLeaderboardCache } from "@/lib/leaderboard";
+import { questTemplate } from "@/content/quest-template";
 import type { Quest } from "@/content/quests";
 
 /**
@@ -28,64 +29,27 @@ const simCode = (i: number) => `SIM${String(i).padStart(3, "0")}`; // letter →
 const img = (seed: string, w = 640, h = 420) =>
   `https://picsum.photos/seed/${seed}/${w}/${h}`;
 
-const VOTING = {
-  pointsByRank: [12, 8, 5, 3],
-  participationPoints: 2,
-  minVotesToRank: 3,
-  votesPerPlayer: 5,
-};
-
 const NAMES = [
   "Ada", "Grace", "Alan", "Linus", "Katherine", "Dennis",
   "Margaret", "Tim", "Radia", "Hedy", "Guido", "Barbara",
 ];
 
-const SIM_QUESTS: Quest[] = [
-  {
-    id: "sim-quiz-1", order: 9001, type: "quiz",
-    title: "Sim · Quick maths", prompt: "What is 7 × 6?",
-    imageUrl: img("simquiz1"),
-    options: [
-      { id: "a", label: "40" }, { id: "b", label: "42" },
-      { id: "c", label: "44" }, { id: "d", label: "48" },
-    ],
-    correctOptionId: "b", points: 5, revealAfterAnswer: true, state: "completed",
-  },
-  {
-    id: "sim-quiz-2", order: 9002, type: "quiz",
-    title: "Sim · Geography", prompt: "What's the capital of Australia?",
-    options: [
-      { id: "syd", label: "Sydney" }, { id: "mel", label: "Melbourne" },
-      { id: "can", label: "Canberra" }, { id: "per", label: "Perth" },
-    ],
-    correctOptionId: "can", points: 5, revealAfterAnswer: true, state: "completed",
-  },
-  {
-    id: "sim-text-1", order: 9003, type: "text",
-    title: "Sim · Team motto", prompt: "Best team motto in five words.",
-    maxChars: 120, voting: VOTING, state: "completed",
-    resultImageUrl: img("simtext1result"),
-  },
-  {
-    id: "sim-text-2", order: 9004, type: "text",
-    title: "Sim · One word", prompt: "Describe the team in one word.",
-    maxChars: 40, voting: VOTING, state: "voting",
-  },
-  {
-    id: "sim-photo-1", order: 9005, type: "media", mediaKind: "photo",
-    title: "Sim · Best desk", prompt: "Show us your desk setup.",
-    imageUrl: img("simphoto1q"), resultImageUrl: img("simphoto1r"),
-    voting: VOTING, state: "completed",
-  },
-];
+// Sim quests are sim-prefixed copies of the real template, mostly "completed"
+// so the leaderboard/results fill up. One text quest is left "voting" so the
+// vote feed has something to test live. Images aren't copied (the template
+// doesn't carry them), but result texts and group flags are.
+const LIVE_VOTE_ID = "write-three-words";
+const SIM_QUESTS: Quest[] = questTemplate.map((q): Quest => ({
+  ...q,
+  id: `sim-${q.id}`,
+  order: 9000 + q.order,
+  state: q.id === LIVE_VOTE_ID ? "voting" : "completed",
+}));
 
-const MOTTOS = [
-  "Ship it and iterate fast", "Fail small, learn big",
-  "Trust the process always", "Move fast, stay kind",
-  "Done beats perfect today", "Strong opinions, loosely held",
-];
-const ONE_WORDS = [
-  "Relentless", "Caffeinated", "Unstoppable", "Curious", "Chaotic",
+const TEXTS = [
+  "Relentless", "Fast, sharp, focused", "The Knockout Kings",
+  "Trust the process", "Legendary and caffeinated", "Ship it, then ship more",
+  "Always adapting",
 ];
 
 export type SeedSummary = {
@@ -138,42 +102,41 @@ export async function seedSimulation(): Promise<SeedSummary> {
     }
     if (answerValues.length) await tx.insert(quizAnswers).values(answerValues);
 
-    // --- Voted quests: submissions + votes ---
-    const voted: {
-      quest: string;
-      kind: "text" | "photo";
-      bodies: string[] | null;
-      submitters: number;
-    }[] = [
-      { quest: "sim-text-1", kind: "text", bodies: MOTTOS, submitters: 6 },
-      { quest: "sim-text-2", kind: "text", bodies: ONE_WORDS, submitters: 5 },
-      { quest: "sim-photo-1", kind: "photo", bodies: null, submitters: 6 },
-    ];
-
+    // --- Voted quests (text/media): submissions + votes ---
     let subCount = 0;
     let voteCount = 0;
+    const submitterCount = Math.min(6, ids.length);
 
-    for (const cfg of voted) {
-      const submitterIds = ids.slice(0, cfg.submitters);
+    for (const quest of SIM_QUESTS) {
+      if (quest.type !== "text" && quest.type !== "media") continue;
+      const isText = quest.type === "text";
+      const submitterIds = ids.slice(0, submitterCount);
+
       const subRows = await tx
         .insert(submissions)
         .values(
           submitterIds.map((pid, i) => ({
             playerId: pid,
-            questId: cfg.quest,
-            kind: cfg.kind,
-            bodyText: cfg.bodies ? cfg.bodies[i % cfg.bodies.length] : null,
-            mediaUrl: cfg.kind === "photo" ? img(`simsub-${cfg.quest}-${i}`) : null,
-            mediaKind: cfg.kind === "photo" ? ("photo" as const) : null,
+            questId: quest.id,
+            // Media sim submissions are all images (picsum) for simplicity,
+            // even on video quests — enough to populate the board.
+            kind: isText ? ("text" as const) : ("photo" as const),
+            bodyText: isText ? TEXTS[i % TEXTS.length] : null,
+            mediaUrl: isText ? null : img(`simsub-${quest.id}-${i}`),
+            mediaKind: isText ? null : ("photo" as const),
+            // Group quests credit a couple of teammates, to exercise crediting.
+            contributorIds: quest.group
+              ? [ids[(i + 1) % ids.length], ids[(i + 2) % ids.length]].filter(
+                  (id) => id !== pid,
+                )
+              : [],
             clientUuid: randomUUID(),
           })),
         )
         .returning({ id: submissions.id });
       subCount += subRows.length;
 
-      // Only completed quests get votes; leave the "voting" one open for the
-      // tester to vote on live.
-      const quest = SIM_QUESTS.find((q) => q.id === cfg.quest)!;
+      // Only completed quests get votes; the "voting" one is left open to test.
       if (quest.state !== "completed") continue;
 
       const voteValues: { voterId: string; submissionId: string }[] = [];
