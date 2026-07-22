@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { quizAnswers, submissions, votes } from "@/db/schema";
+import { bonusPoints, quizAnswers, submissions, votes } from "@/db/schema";
 import { getCompletedQuests } from "@/lib/quests";
 import { scoreQuest } from "@/lib/scoring";
 import type { Quest } from "@/content/quests";
@@ -33,7 +33,7 @@ export async function getLeaderboards(): Promise<Leaderboards> {
     return cache.boards;
   }
 
-  const [quests, allPlayers, allSubmissions, allVotes, allAnswers] =
+  const [quests, allPlayers, allSubmissions, allVotes, allAnswers, allBonus] =
     await Promise.all([
       getCompletedQuests(),
       db.query.players.findMany(),
@@ -56,7 +56,16 @@ export async function getLeaderboards(): Promise<Leaderboards> {
           isCorrect: quizAnswers.isCorrect,
         })
         .from(quizAnswers),
+      db
+        .select({ playerId: bonusPoints.playerId, points: bonusPoints.points })
+        .from(bonusPoints),
     ]);
+
+  // Host-awarded bonus points count toward the overall board only.
+  const bonusByPlayer = new Map<string, number>();
+  for (const b of allBonus) {
+    bonusByPlayer.set(b.playerId, (bonusByPlayer.get(b.playerId) ?? 0) + b.points);
+  }
 
   // Blocked players, the admin's demo player, and anyone who hasn't
   // finished onboarding (no name yet) never appear.
@@ -102,8 +111,13 @@ export async function getLeaderboards(): Promise<Leaderboards> {
     return entries;
   };
 
+  const overallTotals = totalsFor(quests);
+  for (const [playerId, pts] of bonusByPlayer) {
+    overallTotals.set(playerId, (overallTotals.get(playerId) ?? 0) + pts);
+  }
+
   const boards: Leaderboards = {
-    overall: rank(totalsFor(quests)),
+    overall: rank(overallTotals),
     quiz: rank(totalsFor(quests.filter((q) => q.type === "quiz"))),
     text: rank(totalsFor(quests.filter((q) => q.type === "text"))),
     media: rank(totalsFor(quests.filter((q) => q.type === "media"))),

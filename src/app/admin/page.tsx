@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { count, desc, eq, gt, and } from "drizzle-orm";
 import { db } from "@/db";
-import { loginAttempts, players, submissions } from "@/db/schema";
+import { bonusPoints, loginAttempts, players, submissions } from "@/db/schema";
 import { isAdmin } from "@/lib/session";
 import { isFrozen } from "@/lib/settings";
+import { DEMO_EMAIL } from "@/lib/leaderboard";
 import { getQuests } from "@/lib/quests";
 import { AdminLogin } from "./admin-login";
 import { ActivateAll } from "./activate-all";
 import { FreezeToggle, PlayerRow, SubmissionRow } from "./admin-controls";
+import { BonusPoints } from "./bonus-points";
 import { DemoPlayerButton } from "./demo-player-button";
 import { EmailTest } from "./email-test";
 import { PostHogTest } from "./posthog-test";
@@ -66,6 +68,36 @@ export default async function AdminPage({
       getQuests(),
     ]);
 
+  // Recent bonus awards, grouped by batch (newest first).
+  const bonusRows = await db
+    .select({
+      batchId: bonusPoints.batchId,
+      points: bonusPoints.points,
+      reason: bonusPoints.reason,
+      username: players.username,
+    })
+    .from(bonusPoints)
+    .innerJoin(players, eq(players.id, bonusPoints.playerId))
+    .orderBy(desc(bonusPoints.createdAt))
+    .limit(200);
+  const batches = new Map<
+    string,
+    { batchId: string; points: number; reason: string; names: string[] }
+  >();
+  for (const r of bonusRows) {
+    let b = batches.get(r.batchId);
+    if (!b) {
+      b = { batchId: r.batchId, points: r.points, reason: r.reason, names: [] };
+      batches.set(r.batchId, b);
+    }
+    if (r.username) b.names.push(r.username);
+  }
+  const recentBonus = [...batches.values()].slice(0, 12);
+
+  const bonusPlayers = allPlayers
+    .filter((p) => p.username && !p.isBlocked && p.email !== DEMO_EMAIL)
+    .map((p) => ({ id: p.id, username: p.username! }));
+
   const playerName = new Map(allPlayers.map((p) => [p.id, p.username]));
   const countLabel: Record<TabKey, number | null> = {
     overview: null,
@@ -120,6 +152,10 @@ export default async function AdminPage({
 
           <section className="card mb-6 rounded-2xl p-4">
             <FreezeToggle frozen={frozen} />
+          </section>
+
+          <section className="card mb-6 rounded-2xl p-4">
+            <BonusPoints players={bonusPlayers} recent={recentBonus} />
           </section>
 
           <section className="card mb-6 rounded-2xl p-4">

@@ -152,3 +152,25 @@ export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),
 });
+
+/**
+ * Host-awarded bonus (or penalty) points, outside the quest system. One row
+ * per player per award; rows from a single admin action share a batchId so an
+ * award can be undone as a unit. Counts toward the OVERALL leaderboard only.
+ */
+export const bonusPoints = pgTable(
+  "bonus_points",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    batchId: uuid("batch_id").notNull(),
+    playerId: uuid("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "cascade" }),
+    points: integer("points").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("bonus_points_batch_idx").on(t.batchId)],
+);
