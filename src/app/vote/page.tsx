@@ -7,6 +7,7 @@ import { getVotingQuests } from "@/lib/quests";
 import { getCurrentPlayer } from "@/lib/auth";
 import { seededShuffle } from "@/lib/shuffle";
 import { PlayerShell } from "@/components/player-shell";
+import { SectionInfo } from "../quests/section-info";
 import { VoteFeed } from "./vote-feed";
 
 export default async function VotePage({
@@ -25,7 +26,10 @@ export default async function VotePage({
   if (votable.length === 0) {
     return (
       <PlayerShell username={player.username} avatarUrl={player.avatarUrl}>
-        <h1 className="mb-4 text-3xl">Vote</h1>
+        <div className="mb-4 flex items-center gap-2">
+          <h1 className="text-3xl">🗳️ Vote</h1>
+          <SectionInfo section="vote" />
+        </div>
         <p className="card rounded-2xl p-6 text-center text-muted">
           Nothing is up for voting right now — the hosts open voting on each
           quest during the evening. Check back soon!
@@ -103,6 +107,11 @@ export default async function VotePage({
 
   return (
     <PlayerShell username={player.username} avatarUrl={player.avatarUrl}>
+      <div className="mb-3 flex items-center gap-2">
+        <h1 className="text-3xl">🗳️ Vote</h1>
+        <SectionInfo section="vote" />
+      </div>
+
       <div className="mb-1 flex items-center justify-between gap-2">
         <Link
           href={`/vote?q=${prev.id}`}
@@ -113,9 +122,9 @@ export default async function VotePage({
         </Link>
         <div className="min-w-0 text-center">
           <p className="label-caps text-xs">
-            Vote · {index + 1} / {votable.length}
+            {index + 1} / {votable.length}
           </p>
-          <h1 className="truncate text-2xl">{quest.title}</h1>
+          <h2 className="truncate text-2xl">{quest.title}</h2>
         </div>
         <Link
           href={`/vote?q=${next.id}`}

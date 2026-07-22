@@ -112,6 +112,32 @@ export async function getLeaderboards(): Promise<Leaderboards> {
   };
 
   const overallTotals = totalsFor(quests);
+
+  // Voting participation: +1 per completed voted quest a player cast a vote on.
+  const votedQuestIds = new Set(
+    quests.filter((q) => q.type !== "quiz").map((q) => q.id),
+  );
+  const questIdBySubmission = new Map(
+    allSubmissions.map((s) => [s.id, s.questId]),
+  );
+  const votedQuestsByVoter = new Map<string, Set<string>>();
+  for (const v of allVotes) {
+    const questId = questIdBySubmission.get(v.submissionId);
+    if (!questId || !votedQuestIds.has(questId)) continue;
+    let set = votedQuestsByVoter.get(v.voterId);
+    if (!set) {
+      set = new Set();
+      votedQuestsByVoter.set(v.voterId, set);
+    }
+    set.add(questId);
+  }
+  for (const [playerId, questSet] of votedQuestsByVoter) {
+    overallTotals.set(
+      playerId,
+      (overallTotals.get(playerId) ?? 0) + questSet.size,
+    );
+  }
+
   for (const [playerId, pts] of bonusByPlayer) {
     overallTotals.set(playerId, (overallTotals.get(playerId) ?? 0) + pts);
   }

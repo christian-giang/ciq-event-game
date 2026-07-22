@@ -8,6 +8,7 @@ import { getCurrentPlayer } from "@/lib/auth";
 import { PlayerShell } from "@/components/player-shell";
 import { MenuTile } from "./menu-tile";
 import { QuestBrowser } from "./quest-browser";
+import { SectionInfo } from "./section-info";
 import { TypeProgress } from "./type-progress";
 
 const TYPES = [
@@ -142,9 +143,12 @@ export default async function QuestsPage({
 
   return (
     <PlayerShell username={player.username}>
-      <h1 className="mb-6 text-3xl">
-        {type.icon} {type.label}
-      </h1>
+      <div className="mb-6 flex items-center gap-2">
+        <h1 className="text-3xl">
+          {type.icon} {type.label}
+        </h1>
+        <SectionInfo section={selected} />
+      </div>
 
       {questsOfType.length === 0 ? (
         <p className="card rounded-2xl p-6 text-center text-muted">
