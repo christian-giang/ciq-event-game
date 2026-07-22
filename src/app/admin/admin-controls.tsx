@@ -46,6 +46,49 @@ export function FreezeToggle({ frozen }: { frozen: boolean }) {
   );
 }
 
+export function LeaderboardModeToggle({
+  mode,
+}: {
+  mode: "relative" | "absolute";
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function set(next: "relative" | "absolute") {
+    if (next === mode || busy) return;
+    setBusy(true);
+    await post("/api/admin/leaderboard-mode", { mode: next });
+    setBusy(false);
+    router.refresh();
+  }
+
+  return (
+    <div>
+      <p className="font-medium">Leaderboard view</p>
+      <p className="mb-3 text-sm text-muted">
+        <strong>Relative</strong> shows each player only their nearest rivals
+        (you, and one above &amp; below). <strong>Absolute</strong> shows the
+        full top of the board.
+      </p>
+      <div className="flex gap-1 rounded-xl border border-line bg-paper p-1">
+        {(["relative", "absolute"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            disabled={busy}
+            onClick={() => set(m)}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium capitalize ${
+              mode === m ? "bg-accent text-white shadow" : "text-muted"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PlayerRow(props: {
   id: string;
   username: string | null;

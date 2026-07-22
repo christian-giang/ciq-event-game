@@ -3,12 +3,17 @@ import { count, desc, eq, gt, and } from "drizzle-orm";
 import { db } from "@/db";
 import { bonusPoints, loginAttempts, players, submissions } from "@/db/schema";
 import { isAdmin } from "@/lib/session";
-import { isFrozen } from "@/lib/settings";
+import { getLeaderboardMode, isFrozen } from "@/lib/settings";
 import { DEMO_EMAIL } from "@/lib/leaderboard";
 import { getQuests } from "@/lib/quests";
 import { AdminLogin } from "./admin-login";
 import { ActivateAll } from "./activate-all";
-import { FreezeToggle, PlayerRow, SubmissionRow } from "./admin-controls";
+import {
+  FreezeToggle,
+  LeaderboardModeToggle,
+  PlayerRow,
+  SubmissionRow,
+} from "./admin-controls";
 import { BonusPoints } from "./bonus-points";
 import { DemoPlayerButton } from "./demo-player-button";
 import { EmailTest } from "./email-test";
@@ -67,6 +72,7 @@ export default async function AdminPage({
       isFrozen(),
       getQuests(),
     ]);
+  const leaderboardMode = await getLeaderboardMode();
 
   // Recent bonus awards, grouped by batch (newest first).
   const bonusRows = await db
@@ -152,6 +158,10 @@ export default async function AdminPage({
 
           <section className="card mb-6 rounded-2xl p-4">
             <FreezeToggle frozen={frozen} />
+          </section>
+
+          <section className="card mb-6 rounded-2xl p-4">
+            <LeaderboardModeToggle mode={leaderboardMode} />
           </section>
 
           <section className="card mb-6 rounded-2xl p-4">
