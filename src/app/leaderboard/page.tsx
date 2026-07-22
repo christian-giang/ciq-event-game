@@ -12,9 +12,11 @@ import { PlayerShell } from "@/components/player-shell";
 function Row({
   entry,
   isMe,
+  hideRank = false,
 }: {
   entry: LeaderboardEntry;
   isMe: boolean;
+  hideRank?: boolean;
 }) {
   return (
     <li
@@ -22,25 +24,42 @@ function Row({
         isMe ? "border-2 border-accent" : ""
       }`}
     >
-      <span
-        className={`w-8 shrink-0 text-center font-heading text-2xl ${
-          entry.rank <= 3 ? "" : "text-muted"
-        }`}
-      >
-        {entry.rank === 1
-          ? "🥇"
-          : entry.rank === 2
-            ? "🥈"
-            : entry.rank === 3
-              ? "🥉"
-              : entry.rank}
-      </span>
+      {!hideRank && (
+        <span
+          className={`w-8 shrink-0 text-center font-heading text-2xl ${
+            entry.rank <= 3 ? "" : "text-muted"
+          }`}
+        >
+          {entry.rank === 1
+            ? "🥇"
+            : entry.rank === 2
+              ? "🥈"
+              : entry.rank === 3
+                ? "🥉"
+                : entry.rank}
+        </span>
+      )}
       <Avatar name={entry.username} avatarUrl={entry.avatarUrl} size={36} />
       <span className="min-w-0 flex-1 truncate font-medium">
         {entry.username}
         {isMe && <span className="ml-2 text-sm text-muted">(you)</span>}
       </span>
       <span className="shrink-0 font-semibold">{entry.points}</span>
+    </li>
+  );
+}
+
+/** A dimmed, anonymised placeholder row that implies more players exist
+ *  beyond the ones shown (used in the relative view). */
+function GhostRow() {
+  return (
+    <li
+      aria-hidden
+      className="card flex items-center gap-3 rounded-2xl p-3 opacity-40"
+    >
+      <span className="h-9 w-9 shrink-0 rounded-full bg-line" />
+      <span className="h-3.5 w-24 rounded bg-line" />
+      <span className="ml-auto h-3.5 w-7 rounded bg-line" />
     </li>
   );
 }
@@ -97,13 +116,18 @@ export default async function LeaderboardPage() {
             You and your closest rivals — climb past the player above you!
           </p>
           <ol className="space-y-2">
+            {/* someone above the shown "above" player (not if you're 1st) */}
+            {myIndex > 0 && <GhostRow />}
             {relative.map((entry) => (
               <Row
                 key={entry.playerId}
                 entry={entry}
                 isMe={entry.playerId === playerId}
+                hideRank
               />
             ))}
+            {/* someone below the shown "below" player (not if you're last) */}
+            {myIndex >= 0 && myIndex < entries.length - 1 && <GhostRow />}
           </ol>
         </>
       ) : (
