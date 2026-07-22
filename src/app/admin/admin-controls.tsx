@@ -153,6 +153,7 @@ export function SubmissionRow(props: {
   bodyText: string | null;
   mediaUrl: string | null;
   isHidden: boolean;
+  contributors: string[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -173,6 +174,11 @@ export function SubmissionRow(props: {
             <span className="ml-2 text-danger">hidden</span>
           )}
         </p>
+        {props.contributors.length > 0 && (
+          <p className="text-sm text-muted">
+            with {props.contributors.join(", ")}
+          </p>
+        )}
         {props.bodyText && (
           <p className="truncate text-sm text-muted">“{props.bodyText}”</p>
         )}

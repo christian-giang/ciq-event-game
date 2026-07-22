@@ -199,6 +199,9 @@ export default async function AdminPage({
                   bodyText={s.bodyText}
                   mediaUrl={s.mediaUrl}
                   isHidden={s.isHidden}
+                  contributors={(s.contributorIds ?? [])
+                    .map((id) => playerName.get(id))
+                    .filter((n): n is string => !!n)}
                 />
               ))}
             </ul>
