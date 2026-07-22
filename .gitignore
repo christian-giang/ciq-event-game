@@ -46,3 +46,7 @@ exports/
 
 # keep the env template
 !.env.example
+
+# unused raw 3D source — only animations-shared/character.min.glb + clips/ ship
+/public/animations/
+/public/animations-shared/character.glb

@@ -6,13 +6,14 @@ import { quizAnswers, submissions } from "@/db/schema";
 import { getVisibleQuests, getVotingQuests } from "@/lib/quests";
 import { getCurrentPlayer } from "@/lib/auth";
 import { PlayerShell } from "@/components/player-shell";
+import { MenuTile } from "./menu-tile";
 import { QuestBrowser } from "./quest-browser";
 import { TypeProgress } from "./type-progress";
 
 const TYPES = [
-  { key: "quiz", label: "Quiz", icon: "🧠" },
-  { key: "text", label: "Write", icon: "✍️" },
-  { key: "media", label: "Camera", icon: "📷" },
+  { key: "quiz", label: "Quiz", icon: "🧠", clip: "taunt" },
+  { key: "text", label: "Write", icon: "✍️", clip: "warming-up" },
+  { key: "media", label: "Camera", icon: "📷", clip: "boxing" },
 ] as const;
 
 type TypeKey = (typeof TYPES)[number]["key"];
@@ -104,29 +105,24 @@ export default async function QuestsPage({
               (q) => q.type === type.key,
             );
             return (
-              <Link
+              <MenuTile
                 key={type.key}
                 href={`/quests?t=${type.key}`}
-                className="card flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl p-4 text-center transition-transform active:scale-[0.98]"
+                label={type.label}
+                clip={type.clip}
+                icon={type.icon}
               >
-                <span className="text-5xl">{type.icon}</span>
-                <span className="text-xl font-medium">{type.label}</span>
                 <TypeProgress
                   questIds={questsOfType.map((q) => q.id)}
                   serverDoneIds={questsOfType
                     .filter((q) => doneQuestIds.has(q.id))
                     .map((q) => q.id)}
                 />
-              </Link>
+              </MenuTile>
             );
           })}
 
-          <Link
-            href="/vote"
-            className="card flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl p-4 text-center transition-transform active:scale-[0.98]"
-          >
-            <span className="text-5xl">🗳️</span>
-            <span className="text-xl font-medium">Vote</span>
+          <MenuTile href="/vote" label="Vote" clip="drop-kick" icon="🗳️">
             {votingQuests.length > 0 ? (
               <span className="rounded-full bg-accent px-2 py-0.5 text-sm font-semibold text-white">
                 {votingQuests.length} open now
@@ -134,7 +130,7 @@ export default async function QuestsPage({
             ) : (
               <span className="text-sm text-muted">nothing yet</span>
             )}
-          </Link>
+          </MenuTile>
         </div>
       </PlayerShell>
     );

@@ -16,6 +16,8 @@
     "demo": "tsx --env-file=.env.local scripts/demo.ts"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@vercel/blob": "^2.6.1",
     "@vercel/speed-insights": "^2.0.0",
     "drizzle-orm": "^0.45.2",
@@ -26,6 +28,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.17.2",
+    "three": "^0.180.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -34,6 +37,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.185.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
