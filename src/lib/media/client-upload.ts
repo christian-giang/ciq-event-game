@@ -2,6 +2,15 @@ import { upload } from "@vercel/blob/client";
 import { EXT_BY_CONTENT_TYPE } from "@/lib/media/server";
 
 /**
+ * Above this size, upload in multiple parts. Multipart splits the file into
+ * ~5MB chunks that the SDK uploads and retries independently, so a stalled
+ * chunk on flaky cellular is re-sent on a fresh connection instead of hanging
+ * the whole upload. Below 5MB a file is a single part anyway, so a plain PUT
+ * (one round-trip) is leaner — we keep photos on the simple path.
+ */
+const MULTIPART_THRESHOLD_BYTES = 5 * 1024 * 1024;
+
+/**
  * Client-visible storage driver. Mirrors the server's STORAGE_DRIVER, but the
  * browser can only read NEXT_PUBLIC_* vars, so this one must be set to match.
  */
@@ -32,6 +41,7 @@ export async function uploadToBlob(opts: {
     access: "public",
     handleUploadUrl: "/api/media/blob-upload",
     contentType: opts.contentType,
+    multipart: opts.blob.size > MULTIPART_THRESHOLD_BYTES,
     abortSignal: opts.abortSignal,
     onUploadProgress: opts.onProgress
       ? ({ percentage }) => opts.onProgress!(percentage)
