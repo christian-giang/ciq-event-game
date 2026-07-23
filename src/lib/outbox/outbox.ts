@@ -2,6 +2,7 @@
 
 import { openDB, type IDBPDatabase } from "idb";
 import { clientStorageDriver, uploadToBlob } from "@/lib/media/client-upload";
+import { SERVER_UPLOAD_MAX_BYTES } from "@/lib/media/server";
 
 /**
  * The offline-first submission queue. Everything a player submits is
@@ -273,9 +274,16 @@ class Outbox {
           this.progress(current.clientUuid, pct);
           arm();
         };
-        if (clientStorageDriver() === "vercel-blob") {
-          // Prod: bytes go browser → Vercel Blob directly, then we checkpoint
-          // the public URL so retries skip straight to step B.
+        // Small media (photos, avatars) go through OUR origin — reliable on
+        // cellular, where a direct browser → Blob upload gets rejected. Only
+        // large videos, which can't fit a serverless request body, go straight
+        // to Blob (and realistically want wifi).
+        const directToBlob =
+          clientStorageDriver() === "vercel-blob" &&
+          current.blob.size > SERVER_UPLOAD_MAX_BYTES;
+        if (directToBlob) {
+          // Bytes go browser → Vercel Blob directly (multipart), then we
+          // checkpoint the public URL so retries skip straight to step B.
           const { url } = await uploadToBlob({
             clientUuid: current.clientUuid,
             blob: current.blob,
@@ -285,7 +293,8 @@ class Outbox {
           });
           await this.update(current, { blobUrl: url });
         } else {
-          // Local dev: get a PUT target from our own endpoint, then PUT bytes.
+          // Get a PUT target from our own endpoint, then PUT the bytes there;
+          // the server stores them to Blob (prod) or disk (dev).
           const target = await fetch("/api/media/upload-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

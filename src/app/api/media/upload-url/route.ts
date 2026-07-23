@@ -12,12 +12,11 @@ const bodySchema = z.object({
 });
 
 /**
- * Step A of a media submission for the LOCAL driver only: tells the client
- * where to PUT the bytes (our own /api/media/upload endpoint).
- *
- * With STORAGE_DRIVER=vercel-blob the client never calls this — it uploads
- * straight to Blob via @vercel/blob/client, authorized by
- * /api/media/blob-upload.
+ * Step A of a small-media submission: tells the client where to PUT the bytes
+ * (our own /api/media/upload endpoint, which stores to Blob in prod or disk in
+ * dev). Used for photos and avatars on both drivers — routing them through our
+ * origin is reliable on cellular. Large videos skip this and go browser → Blob
+ * directly via @vercel/blob/client (authorized by /api/media/blob-upload).
  */
 export async function POST(req: Request) {
   // Admins upload quest images; players upload submissions/avatars.
@@ -56,16 +55,10 @@ export async function POST(req: Request) {
     );
   }
 
-  if (storageDriver() === "local") {
-    return NextResponse.json({
-      driver: "local",
-      url: `/api/media/upload?uuid=${body.clientUuid}&ext=${ext}`,
-    });
-  }
-
-  // vercel-blob uploads bypass this endpoint entirely (see /api/media/blob-upload).
-  return NextResponse.json(
-    { error: "This driver uploads via /api/media/blob-upload." },
-    { status: 400 },
-  );
+  // Both drivers accept the bytes at /api/media/upload; the endpoint writes to
+  // Blob (vercel-blob) or disk (local). Large videos never reach here.
+  return NextResponse.json({
+    driver: storageDriver(),
+    url: `/api/media/upload?uuid=${body.clientUuid}&ext=${ext}`,
+  });
 }

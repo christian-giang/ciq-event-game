@@ -1,5 +1,5 @@
 import { upload } from "@vercel/blob/client";
-import { EXT_BY_CONTENT_TYPE } from "@/lib/media/server";
+import { EXT_BY_CONTENT_TYPE, SERVER_UPLOAD_MAX_BYTES } from "@/lib/media/server";
 
 /**
  * Above this size, upload in multiple parts. Multipart splits the file into
@@ -61,11 +61,15 @@ export async function uploadPicture(
 ): Promise<string> {
   const clientUuid = crypto.randomUUID();
 
-  if (clientStorageDriver() === "vercel-blob") {
+  // Large pictures go straight to Blob; small ones (avatars, most quest images)
+  // route through our origin, which is reliable on cellular.
+  if (
+    clientStorageDriver() === "vercel-blob" &&
+    blob.size > SERVER_UPLOAD_MAX_BYTES
+  ) {
     return (await uploadToBlob({ clientUuid, blob, contentType })).url;
   }
 
-  // Local dev driver: two-step through our own endpoint.
   const target = await fetch("/api/media/upload-url", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -2,6 +2,14 @@
 
 export const MEDIA_MAX_BYTES = 30 * 1024 * 1024;
 
+/**
+ * Media at or below this size is uploaded through our own origin (phone →
+ * /api/media/upload → server → Blob), which is reliable on cellular. Kept
+ * safely under Vercel's ~4.5MB serverless request-body limit. Anything larger
+ * (videos) goes browser → Blob directly and realistically wants wifi.
+ */
+export const SERVER_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+
 export const EXT_BY_CONTENT_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
