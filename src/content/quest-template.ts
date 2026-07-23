@@ -193,14 +193,18 @@ export const questTemplate: Quest[] = [
     id: "video-sports-moment", order: 18, type: "media", mediaKind: "video",
     maxDurationSec: 15, state: "unreleased", group: true,
     imageUrl: "/quest-images/sportsmoment.jpg",
-    title: "Sports moment", prompt: "Recreate a famous (combat) sports moment.",
+    title: "Sports moment",
+    prompt:
+      "Recreate a famous (combat) sports moment. Keep it under 15 seconds and 25 MB — if it won't upload, lower your camera's resolution and quality, or trim the clip.",
     voting: VOTING_VIDEO,
   },
   {
     id: "video-trick-shot", order: 19, type: "media", mediaKind: "video",
     maxDurationSec: 15, state: "unreleased", group: true,
     imageUrl: "/quest-images/trickshot.jpg",
-    title: "Trick shot", prompt: "Record an impressive trick shot.",
+    title: "Trick shot",
+    prompt:
+      "Record an impressive trick shot. Keep it under 15 seconds and 25 MB — if it won't upload, lower your camera's resolution and quality, or trim the clip.",
     voting: VOTING_VIDEO,
   },
 ];
