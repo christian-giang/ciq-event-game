@@ -137,6 +137,7 @@ export default async function VotePage({
       <p className="mb-4 text-center text-sm text-muted">{quest.prompt}</p>
 
       <VoteFeed
+        key={quest.id}
         submissions={feed}
         initialVoted={myVotes.map((v) => v.submissionId)}
         cap={quest.voting.votesPerPlayer}
