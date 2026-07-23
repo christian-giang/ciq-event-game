@@ -34,7 +34,9 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
   const [processing, setProcessing] = useState(false);
   const [replacing, setReplacing] = useState(false);
   const photoInput = useRef<HTMLInputElement>(null);
+  const photoLibraryInput = useRef<HTMLInputElement>(null);
   const videoInput = useRef<HTMLInputElement>(null);
+  const videoLibraryInput = useRef<HTMLInputElement>(null);
 
   const maxSec = quest.maxDurationSec ?? 15;
 
@@ -117,11 +119,20 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
     <div className="space-y-2">
       {(quest.mediaKind === "photo" || quest.mediaKind === "either") && (
         <>
+          {/* capture= opens the camera directly; the library input omits it so
+              iOS/Android offer the photo roll instead. */}
           <input
             ref={photoInput}
             type="file"
             accept="image/*"
             capture="environment"
+            className="hidden"
+            onChange={(e) => onPick(e.target.files?.[0], "photo")}
+          />
+          <input
+            ref={photoLibraryInput}
+            type="file"
+            accept="image/*"
             className="hidden"
             onChange={(e) => onPick(e.target.files?.[0], "photo")}
           />
@@ -132,6 +143,14 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             onClick={() => photoInput.current?.click()}
           >
             📷 Take a photo
+          </button>
+          <button
+            type="button"
+            disabled={processing}
+            className="field w-full rounded-lg px-5 py-3 font-medium"
+            onClick={() => photoLibraryInput.current?.click()}
+          >
+            🖼️ Choose from library
           </button>
         </>
       )}
@@ -145,6 +164,13 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             className="hidden"
             onChange={(e) => onPick(e.target.files?.[0], "video")}
           />
+          <input
+            ref={videoLibraryInput}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={(e) => onPick(e.target.files?.[0], "video")}
+          />
           <button
             type="button"
             disabled={processing}
@@ -154,6 +180,14 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             onClick={() => videoInput.current?.click()}
           >
             🎥 Record a video ({maxSec}s max)
+          </button>
+          <button
+            type="button"
+            disabled={processing}
+            className="field w-full rounded-lg px-5 py-3 font-medium"
+            onClick={() => videoLibraryInput.current?.click()}
+          >
+            📁 Choose from library ({maxSec}s max)
           </button>
         </>
       )}
@@ -248,6 +282,13 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             Keep the app open until it&apos;s done.
           </p>
         </div>
+        <button
+          type="button"
+          className="field w-full rounded-lg px-4 py-2 text-sm"
+          onClick={() => outbox.cancel(local.clientUuid)}
+        >
+          Cancel &amp; start over
+        </button>
       </div>
     );
   }

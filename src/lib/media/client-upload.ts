@@ -23,6 +23,7 @@ export async function uploadToBlob(opts: {
   blob: Blob;
   contentType: string;
   onProgress?: (pct: number) => void;
+  abortSignal?: AbortSignal;
 }): Promise<{ url: string }> {
   const ext = EXT_BY_CONTENT_TYPE[opts.contentType] ?? "bin";
   // addRandomSuffix is false server-side, so the same clientUuid overwrites
@@ -31,6 +32,7 @@ export async function uploadToBlob(opts: {
     access: "public",
     handleUploadUrl: "/api/media/blob-upload",
     contentType: opts.contentType,
+    abortSignal: opts.abortSignal,
     onUploadProgress: opts.onProgress
       ? ({ percentage }) => opts.onProgress!(percentage)
       : undefined,

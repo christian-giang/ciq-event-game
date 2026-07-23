@@ -64,11 +64,18 @@ function xhrPut(
   blob: Blob,
   contentType: string,
   onProgress: (pct: number) => void,
+  signal?: AbortSignal,
 ): Promise<{ url: string }> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
     xhr.setRequestHeader("Content-Type", contentType);
+    signal?.addEventListener("abort", () => xhr.abort(), { once: true });
+    xhr.onabort = () => reject(new DOMException("Aborted", "AbortError"));
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -96,6 +103,9 @@ function xhrPut(
 const DB_NAME = "wedding-game";
 const STORE = "outbox";
 const DONE_TTL_MS = 24 * 60 * 60 * 1000;
+/** Abort a send if the upload/POST makes no progress for this long. Stops one
+ *  stalled upload from deadlocking the whole (serialized) queue. */
+const STALL_TIMEOUT_MS = 45_000;
 
 const EMPTY_SNAPSHOT: OutboxSnapshot = { items: [], pending: 0, rejected: 0 };
 
@@ -109,6 +119,8 @@ function backoffMs(attempts: number): number {
 class Outbox {
   private dbPromise: Promise<IDBPDatabase> | null = null;
   private items = new Map<string, OutboxItem>();
+  /** In-flight aborts, keyed by clientUuid (stall watchdog + user cancel). */
+  private controllers = new Map<string, AbortController>();
   private listeners = new Set<() => void>();
   private snapshot: OutboxSnapshot = EMPTY_SNAPSHOT;
   private initialized = false;
@@ -170,6 +182,21 @@ class Outbox {
     return item;
   }
 
+  /**
+   * Abandon a submission: abort any in-flight upload and delete it from the
+   * queue. The escape hatch behind the "Cancel" button so a stuck upload never
+   * traps the player on a quest. Deleting from `items` first means the send()
+   * catch sees the item is gone and won't re-queue it.
+   */
+  async cancel(clientUuid: string): Promise<void> {
+    const controller = this.controllers.get(clientUuid);
+    this.controllers.delete(clientUuid);
+    this.items.delete(clientUuid);
+    controller?.abort();
+    this.notify();
+    await (await this.db()).delete(STORE, clientUuid);
+  }
+
   /** Clear backoff delays (e.g. the 'online' event) and sync now. */
   retryNow(): void {
     for (const item of this.items.values()) {
@@ -224,11 +251,28 @@ class Outbox {
 
   private async send(item: OutboxItem): Promise<void> {
     await this.update(item, { status: "inflight" });
+
+    // Stall watchdog: abort if nothing moves for STALL_TIMEOUT_MS. Re-armed on
+    // every progress tick and before the metadata POST, so a legitimately slow
+    // (but progressing) upload is never killed — only a genuine stall.
+    const controller = new AbortController();
+    this.controllers.set(item.clientUuid, controller);
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    const arm = () => {
+      if (watchdog) clearTimeout(watchdog);
+      watchdog = setTimeout(() => controller.abort(), STALL_TIMEOUT_MS);
+    };
+    arm();
+
     try {
       // Media step A: upload the bytes (direct PUT with progress), then
       // checkpoint the resulting URL so retries skip straight to step B.
       let current = this.items.get(item.clientUuid) ?? item;
       if (current.kind === "media" && !current.blobUrl && current.blob) {
+        const onProgress = (pct: number) => {
+          this.progress(current.clientUuid, pct);
+          arm();
+        };
         if (clientStorageDriver() === "vercel-blob") {
           // Prod: bytes go browser → Vercel Blob directly, then we checkpoint
           // the public URL so retries skip straight to step B.
@@ -236,7 +280,8 @@ class Outbox {
             clientUuid: current.clientUuid,
             blob: current.blob,
             contentType: current.blobContentType ?? "application/octet-stream",
-            onProgress: (pct) => this.progress(current.clientUuid, pct),
+            onProgress,
+            abortSignal: controller.signal,
           });
           await this.update(current, { blobUrl: url });
         } else {
@@ -248,6 +293,7 @@ class Outbox {
               clientUuid: current.clientUuid,
               contentType: current.blobContentType,
             }),
+            signal: controller.signal,
           });
           if (!target.ok) {
             const body = await target.json().catch(() => null);
@@ -267,13 +313,15 @@ class Outbox {
             url,
             current.blob,
             current.blobContentType ?? "application/octet-stream",
-            (pct) => this.progress(current.clientUuid, pct),
+            onProgress,
+            controller.signal,
           );
           await this.update(current, { blobUrl: uploaded.url });
         }
         current = this.items.get(item.clientUuid) ?? current;
       }
 
+      arm(); // fresh window for the metadata POST
       const res = await fetch(ENDPOINT_BY_KIND[current.kind], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -283,6 +331,7 @@ class Outbox {
           ...current.payload,
           ...(current.kind === "media" ? { mediaUrl: current.blobUrl } : {}),
         }),
+        signal: controller.signal,
       });
 
       if (res.ok) {
@@ -313,8 +362,12 @@ class Outbox {
 
       throw new Error(`Server error (${res.status})`);
     } catch (err) {
-      // Network failure or 5xx: schedule a retry. Never give up while
-      // the app is open. (this.latest keeps the blobUrl checkpoint.)
+      // Cancelled by the user: the item was already removed — don't resurrect
+      // it by writing a queued row back.
+      if (!this.items.has(item.clientUuid)) return;
+      // Network failure, 5xx, or a stall abort: schedule a retry. Never give up
+      // while the app is open. (this.latest keeps the blobUrl checkpoint, so a
+      // retry after the byte upload skips straight to the metadata POST.)
       const fresh = this.latest(item);
       await this.update(fresh, {
         status: "queued",
@@ -323,6 +376,9 @@ class Outbox {
         lastError: err instanceof Error ? err.message : "network error",
         progress: undefined,
       });
+    } finally {
+      if (watchdog) clearTimeout(watchdog);
+      this.controllers.delete(item.clientUuid);
     }
   }
 
