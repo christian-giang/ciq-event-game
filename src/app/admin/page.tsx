@@ -19,6 +19,7 @@ import {
 import { BonusPoints } from "./bonus-points";
 import { EmailTest } from "./email-test";
 import { PostHogTest } from "./posthog-test";
+import { QuestBulk } from "./quest-bulk";
 import { QuestsSection } from "./quest-editor";
 import { QuestTemplate } from "./quest-template";
 import { SimulationControls } from "./simulation-controls";
@@ -248,6 +249,18 @@ export default async function AdminPage({
               allQuests.filter((q) => questTemplateIds.includes(q.id)).length
             }
             total={questTemplateIds.length}
+          />
+          <QuestBulk
+            counts={{
+              unreleased: allQuests.filter((q) => q.state === "unreleased")
+                .length,
+              released: allQuests.filter((q) => q.state === "released").length,
+              voting: allQuests.filter((q) => q.state === "voting").length,
+              completed: allQuests.filter((q) => q.state === "completed").length,
+              releasedVoted: allQuests.filter(
+                (q) => q.state === "released" && q.type !== "quiz",
+              ).length,
+            }}
           />
           <QuestsSection quests={allQuests} />
         </>
