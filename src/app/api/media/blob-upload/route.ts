@@ -12,16 +12,10 @@ import { getPlayerId, isAdmin } from "@/lib/session";
 
 /**
  * Vercel Blob client-upload handshake (STORAGE_DRIVER=vercel-blob only).
- * The browser's upload() calls this route once, to get a scoped, short-lived
- * client token (onBeforeGenerateToken — where we authorize the player). The
- * media bytes go browser → Blob directly and never touch this function.
- *
- * We deliberately do NOT pass onUploadCompleted: defining it makes the SDK
- * register a server→server completion webhook, and upload() then can't finish
- * until Blob calls that webhook back on this deployment. Behind Vercel
- * Deployment Protection (or on a protected preview URL) that callback is
- * blocked, so uploads hang near 100%. We don't need it — the submission and
- * avatar metadata endpoints record the returned URL once the client posts it.
+ * The browser's upload() calls this route twice: once to get a scoped,
+ * short-lived client token (onBeforeGenerateToken — where we authorize the
+ * player), and once as the upload-completed callback. The media bytes go
+ * browser → Blob directly and never touch this function.
  *
  * No freeze check here: this only authorizes a byte upload (used by both
  * submissions and profile avatars). The freeze is enforced on the metadata
@@ -59,6 +53,10 @@ export async function POST(req: Request): Promise<NextResponse> {
           allowOverwrite: true,
           tokenPayload: JSON.stringify({ uploader }),
         };
+      },
+      onUploadCompleted: async () => {
+        // Nothing to do: the submission/profile metadata endpoints record the
+        // returned URL once the client finishes and posts it.
       },
     });
     return NextResponse.json(result);

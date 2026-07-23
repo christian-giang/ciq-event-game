@@ -1,14 +1,5 @@
 import { upload } from "@vercel/blob/client";
-import { EXT_BY_CONTENT_TYPE, SERVER_UPLOAD_MAX_BYTES } from "@/lib/media/server";
-
-/**
- * Above this size, upload in multiple parts. Multipart splits the file into
- * ~5MB chunks that the SDK uploads and retries independently, so a stalled
- * chunk on flaky cellular is re-sent on a fresh connection instead of hanging
- * the whole upload. Below 5MB a file is a single part anyway, so a plain PUT
- * (one round-trip) is leaner — we keep photos on the simple path.
- */
-const MULTIPART_THRESHOLD_BYTES = 5 * 1024 * 1024;
+import { EXT_BY_CONTENT_TYPE } from "@/lib/media/server";
 
 /**
  * Client-visible storage driver. Mirrors the server's STORAGE_DRIVER, but the
@@ -41,7 +32,6 @@ export async function uploadToBlob(opts: {
     access: "public",
     handleUploadUrl: "/api/media/blob-upload",
     contentType: opts.contentType,
-    multipart: opts.blob.size > MULTIPART_THRESHOLD_BYTES,
     abortSignal: opts.abortSignal,
     onUploadProgress: opts.onProgress
       ? ({ percentage }) => opts.onProgress!(percentage)
@@ -61,15 +51,11 @@ export async function uploadPicture(
 ): Promise<string> {
   const clientUuid = crypto.randomUUID();
 
-  // Large pictures go straight to Blob; small ones (avatars, most quest images)
-  // route through our origin, which is reliable on cellular.
-  if (
-    clientStorageDriver() === "vercel-blob" &&
-    blob.size > SERVER_UPLOAD_MAX_BYTES
-  ) {
+  if (clientStorageDriver() === "vercel-blob") {
     return (await uploadToBlob({ clientUuid, blob, contentType })).url;
   }
 
+  // Local dev driver: two-step through our own endpoint.
   const target = await fetch("/api/media/upload-url", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
