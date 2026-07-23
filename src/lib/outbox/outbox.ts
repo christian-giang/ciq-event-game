@@ -90,7 +90,16 @@ function xhrPut(
           reject(new Error("Upload response was not JSON"));
         }
       } else {
-        const err = new Error(`Upload failed (${xhr.status})`);
+        // Surface the server's error message (e.g. the Blob write reason)
+        // instead of a bare status code.
+        let message = `Upload failed (${xhr.status})`;
+        try {
+          const body = JSON.parse(xhr.responseText) as { error?: string };
+          if (body?.error) message = body.error;
+        } catch {
+          /* non-JSON body — keep the status message */
+        }
+        const err = new Error(message);
         (err as Error & { status?: number }).status = xhr.status;
         reject(err);
       }
