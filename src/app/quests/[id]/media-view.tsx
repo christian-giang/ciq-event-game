@@ -279,8 +279,15 @@ export function MediaView({ quest, serverSubmission }: MediaProps) {
             />
           </div>
           <p className="mt-2 text-muted">
-            Keep the app open until it&apos;s done.
+            {local.attempts > 0
+              ? "Weak signal — we'll keep trying automatically. It's safely saved; you can leave this screen or reconnect to wifi and it'll finish on its own."
+              : "It's saved here — you can leave this screen and it keeps uploading. On a weak mobile signal, wifi is much faster."}
           </p>
+          {local.attempts > 0 && local.lastError && (
+            <p className="mt-2 text-xs text-muted">
+              Retry {local.attempts} · {local.lastError}
+            </p>
+          )}
         </div>
         <button
           type="button"
