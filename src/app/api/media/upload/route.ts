@@ -15,6 +15,11 @@ import { getPlayerId, isAdmin } from "@/lib/session";
 
 const UPLOAD_DIR = ".uploads";
 
+// Receiving the body on slow cellular can take a while before the Blob write
+// even starts; the default 10s Hobby timeout kills the function mid-upload and
+// the client retries forever. 60s (Hobby's max) gives weak connections room.
+export const maxDuration = 60;
+
 /**
  * Receives raw media bytes at OUR origin and stores them — writing to Vercel
  * Blob in production (STORAGE_DRIVER=vercel-blob) or to .uploads/ in local dev.
@@ -73,13 +78,28 @@ export async function PUT(req: Request) {
     }
     // Same pathname + allowOverwrite makes retries idempotent, matching the
     // direct-to-Blob path. Token comes from BLOB_READ_WRITE_TOKEN in the env.
-    const blob = await put(`media/${filename}`, Buffer.from(bytes), {
-      access: "public",
-      contentType,
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
-    return NextResponse.json({ url: blob.url });
+    try {
+      const blob = await put(`media/${filename}`, Buffer.from(bytes), {
+        access: "public",
+        contentType,
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
+      return NextResponse.json({ url: blob.url });
+    } catch (err) {
+      // Surface the real reason (shows in the app + Vercel logs) instead of a
+      // bare 500 that the client silently retries.
+      console.error("Blob put failed:", err);
+      return NextResponse.json(
+        {
+          error:
+            err instanceof Error
+              ? `Storage write failed: ${err.message}`
+              : "Storage write failed.",
+        },
+        { status: 502 },
+      );
+    }
   }
 
   await mkdir(UPLOAD_DIR, { recursive: true });
